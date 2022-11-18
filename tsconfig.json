@@ -16,6 +16,7 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
+    "allowJs": true,
     "outDir": "./dist"
   },
   "include": ["src/**/*.ts"],

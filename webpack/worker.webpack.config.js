@@ -4,8 +4,6 @@ const path = require("path");
 
 const isProduction = process.env.NODE_ENV == "production";
 
-console.log({ context: path.resolve(process.cwd(), ".pocket") });
-
 const config = {
   entry: "./worker-entry.js",
   context: path.resolve(process.cwd(), ".pocket"),
