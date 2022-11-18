@@ -1,6 +1,6 @@
 import fs from "fs/promises";
 
-export async function generateRouter() {
+export async function generateRouter(options: { server: boolean }) {
   const basePath = "examples/todo/routes/";
   const routes: string[] = [];
 
@@ -31,21 +31,56 @@ export async function generateRouter() {
   const handlers = routes.map(
     (route) => `
     if ("${route === "" ? "/" : route}" === url.pathname) {
-        return new Response(${
-          route === "" ? "index" : route.replace("/", "_")
-        }.get(req));
+        return ${route === "" ? "index" : route.replace("/", "_")}.get(req);
     }`
   );
+
+  const registerWorkerCode = `
+  (() => {
+    if (typeof window !== "undefined" && "serviceWorker" in window.navigator) {
+        window.navigator.serviceWorker.register("/_pocket-worker.js", {
+          scope: "/",
+        });
+    }
+  })();
+  `;
 
   console.log({ routes, imports });
   return `
     ${imports.join("\n")}
 
-    export default function router(req) {
+    function router(req) {
         const url = new URL(req.url)
-        const segments = url.pathname.split('/')
+        
+        console.log('handle', url.pathname)
+        
+        if (url.pathname === "/_pocket/register-worker.js") {
+            return new Response(${JSON.stringify(
+              registerWorkerCode
+            )}, { headers: { "Content-Type": "text/javascript" }})
+        }
+
+        ${
+          options.server
+            ? `
+        if (url.pathname === "/_pocket-worker.js") {
+            return new Response(${JSON.stringify(
+              await fs.readFile(".pocket/worker/main.js", { encoding: "utf-8" })
+            )}, { headers: { "Content-Type": "application/javascript; charset=UTF-8" }})
+        }
+        `
+            : ""
+        }
 
         ${handlers.join("\n")}
+
+        return new Response("404", { status: 404, statusText: "Not Found" });
     }
+
+    addEventListener('fetch', event => {
+        return event.respondWith(router(event.request))
+    })
   `;
 }
+
+// <script src="_pocket/worker.js"></script>

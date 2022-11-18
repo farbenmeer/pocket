@@ -5,10 +5,10 @@ const path = require("path");
 const isProduction = process.env.NODE_ENV == "production";
 
 const config = {
-  entry: "./worker-entry.js",
-  context: path.resolve(__dirname, ".pocket"),
+  entry: "./server-entry.js",
+  context: path.resolve(process.cwd(), ".pocket"),
   output: {
-    path: path.resolve(__dirname, ".pocket/dist"),
+    path: path.resolve(process.cwd(), ".pocket/server"),
   },
   module: {
     rules: [

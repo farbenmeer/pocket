@@ -3,7 +3,7 @@
     "incremental": true,
     "target": "es2019",
     "lib": ["es2019", "dom", "webworker"],
-    "module": "esnext",
+    "module": "CommonJS",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "declaration": true,
@@ -16,8 +16,7 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
-    "noEmit": true,
-    "outDir": "./esm"
+    "outDir": "./dist"
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.test.ts"]
