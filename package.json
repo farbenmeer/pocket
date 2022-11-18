@@ -1,0 +1,8 @@
+{
+  "name": "pocket",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "repository": "git@github.com:farbenmeer/pocket.git",
+  "author": "Michel Smola <michel.smola@farbenmeer.de>",
+  "license": "MIT"
+}
