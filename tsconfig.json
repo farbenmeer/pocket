@@ -16,6 +16,7 @@
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
+    "noEmit": true,
     "outDir": "./esm"
   },
   "include": ["src/**/*.ts"],
