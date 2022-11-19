@@ -5,7 +5,10 @@ export function get(req: Request) {
   return new Response(template(), { headers: { "Content-Type": "text/html" } });
 }
 
-const pocketScript = safeHtml`
+// @ts-ignore
+const pocketScript = IS_WORKER
+  ? ""
+  : safeHtml`
   <script src="/_pocket-register-worker.js"></script>
 `;
 
