@@ -2,7 +2,7 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { build } from "./build";
-import { startServer } from "./server-runtime";
+import { startServer } from "./server";
 
 yargs(hideBin(process.argv))
   .command(
