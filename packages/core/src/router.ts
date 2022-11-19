@@ -10,30 +10,30 @@ export default function generateRouter() {
 
     for (const entry of entries) {
       if (entry === "route.ts") {
-        routes.push(dir);
+        routes.push(dir === "." ? "/" : dir.slice(1));
         return;
       }
 
       if (fs.statSync(path.resolve(basePath, dir, entry)).isDirectory()) {
-        parseDirectory(dir + entry + "/");
+        parseDirectory(dir + "/" + entry);
       }
     }
   }
 
-  parseDirectory("./");
+  parseDirectory(".");
 
   const imports = routes.map(
     (route) => `
     import * as ${handlerName(route)} from "${path.resolve(
       basePath,
-      route,
+      route.slice(1),
       "route.ts"
     )}";`
   );
 
   const handlers = routes.map(
     (route) => `
-    if ("${route.slice(1)}" === url.pathname) {
+    if ("${route}" === url.pathname) {
         return ${handlerName(route)}.get(req);
     }`
   );
@@ -67,5 +67,5 @@ export default function generateRouter() {
 }
 
 function handlerName(route: string) {
-  return route.replace(".", "routes").replaceAll("/", "_") + "Handler";
+  return route.replaceAll("/", "_") + "Handler";
 }
