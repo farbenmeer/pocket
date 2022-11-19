@@ -4,7 +4,8 @@
     "examples/*"
   ],
   "scripts": {
-    "build": "turbo run build"
+    "build": "turbo run build",
+    "start": "turbo run start"
   },
   "private": true,
   "devDependencies": {

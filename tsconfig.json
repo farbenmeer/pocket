@@ -2,8 +2,8 @@
   "compilerOptions": {
     "incremental": true,
     "target": "es2019",
-    "lib": ["es2019", "dom", "webworker"],
-    "module": "CommonJS",
+    "lib": ["esnext", "dom", "webworker"],
+    "module": "ESNext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "declaration": true,
@@ -19,6 +19,6 @@
     "allowJs": true,
     "outDir": "./dist"
   },
-  "include": ["src/**/*.ts"],
+  "include": ["**/src/**/*.ts"],
   "exclude": ["**/*.test.ts"]
 }

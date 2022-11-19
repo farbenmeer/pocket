@@ -2,8 +2,11 @@
   "$schema": "https://turbo.build/schema.json",
   "pipeline": {
     "build": {
-      "outputs": ["packages/core/dist/**"],
+      "outputs": ["dist/**", ".pocket/**"],
       "dependsOn": ["^build"]
+    },
+    "start": {
+      "dependsOn": ["build"]
     }
   }
 }

@@ -6,15 +6,18 @@
   "author": "Michel Smola <michel.smola@farbenmeer.de>",
   "license": "MIT",
   "bin": {
-    "pocket": "./dist/src/cli.js"
+    "pocket": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc"
+    "build": "tsc --module commonjs"
   },
   "dependencies": {
     "common-tags": "^1.8.2",
     "edge-runtime": "^2.0.2",
     "handlebars": "^4.7.7",
+    "micro": "^9.4.1",
+    "node-static": "^0.7.11",
+    "swc-loader": "^0.2.3",
     "typescript": "^4.9.3",
     "webpack": "^5.75.0",
     "yargs": "^17.6.2"
@@ -25,6 +28,7 @@
     "@types/common-tags": "^1.8.1",
     "@types/jest": "^29.2.3",
     "@types/node": "^18.11.9",
+    "@types/node-static": "^0.7.7",
     "@types/yargs": "^17.0.13",
     "@webpack-cli/generators": "^3.0.0",
     "exit-hook": "^3.1.2",
@@ -32,6 +36,7 @@
     "prettier": "^2.7.1",
     "ts-loader": "^9.4.1",
     "ts-node": "^10.9.1",
+    "val-loader": "^5.0.0",
     "webpack-cli": "^5.0.0",
     "webpack-dev-server": "^4.11.1"
   }

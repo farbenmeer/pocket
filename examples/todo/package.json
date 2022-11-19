@@ -4,9 +4,13 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "build": "pocket build"
+    "build": "pocket build",
+    "start": "pocket start"
   },
   "dependencies": {
     "pocket": "*"
+  },
+  "devDependencies": {
+    "webpack-cli": "^5.0.0"
   }
 }

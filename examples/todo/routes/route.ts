@@ -6,7 +6,7 @@ export function get(req: Request) {
 }
 
 const pocketScript = safeHtml`
-  <script src="/_pocket/register-worker.js"></script>
+  <script src="/_pocket-register-worker.js"></script>
 `;
 
 function template() {
