@@ -56,11 +56,9 @@ export default function generateRouter() {
           }
       }
 
-      if (IS_SERVER) {
-        addEventListener('fetch', event => {
-            return event.respondWith(router(event.request))
-        })
-      }
+      addEventListener('fetch', event => {
+          return event.respondWith(router(event.request))
+      })
     `,
     dependencies: routes.map((route) =>
       path.resolve(basePath, route, "route.ts")
