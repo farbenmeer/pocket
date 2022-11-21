@@ -64,6 +64,28 @@ export class Html {
       },
     });
   }
+
+  toString(): string {
+    return this.strings
+      .map((string, index) => {
+        const arg = this.args[index];
+
+        if (arg === outlet) {
+          throw new Error("Outlets should only be used in layouts");
+        }
+
+        if (arg instanceof Html) {
+          return string + arg.toString();
+        }
+
+        if (arg) {
+          return string + escape(arg);
+        }
+
+        return string;
+      })
+      .join("");
+  }
 }
 
 export const pocketScript = html`
