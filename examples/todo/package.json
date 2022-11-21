@@ -10,8 +10,5 @@
   },
   "dependencies": {
     "pocket": "*"
-  },
-  "devDependencies": {
-    "webpack-cli": "^5.0.0"
   }
 }

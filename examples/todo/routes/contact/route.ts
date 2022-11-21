@@ -1,4 +1,4 @@
 // handles /contact
 export function get(req: Request) {
-  return new Response("Contact Us!!");
+  return "Contact Us!!";
 }
