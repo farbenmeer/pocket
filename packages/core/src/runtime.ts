@@ -15,7 +15,8 @@
 
     eventSource.addEventListener("message", async () => {
       console.log("received message");
-      await registration.update();
+      eventSource.close();
+      registration.unregister();
       window.location.reload();
     });
   }
