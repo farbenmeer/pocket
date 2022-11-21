@@ -1,5 +1,6 @@
 import * as path from "path";
 import { Configuration, DefinePlugin } from "webpack";
+import CopyPlugin from "copy-webpack-plugin";
 
 export function webpackConfig(options: {
   mode: Configuration["mode"];
@@ -20,6 +21,17 @@ export function webpackConfig(options: {
     resolve: {
       extensions: [".tsx", ".ts", ".jsx", ".js"],
     },
+    plugins: [
+      new CopyPlugin({
+        patterns: [
+          {
+            from: path.resolve(process.cwd(), "public"),
+            to: "static",
+            noErrorOnMissing: true,
+          },
+        ],
+      }),
+    ],
   };
 
   const clientConfig: Configuration = {
@@ -34,6 +46,7 @@ export function webpackConfig(options: {
     },
     devtool: options.mode === "development" ? "eval-source-map" : "source-map",
     plugins: [
+      ...baseConfig.plugins,
       new DefinePlugin({
         IS_WORKER: true,
         IS_SERVER: false,
@@ -49,6 +62,7 @@ export function webpackConfig(options: {
     },
     devtool: "source-map",
     plugins: [
+      ...baseConfig.plugins,
       new DefinePlugin({
         IS_WORKER: false,
         IS_SERVER: true,
