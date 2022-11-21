@@ -69,7 +69,11 @@ export default function generateRouter() {
         ? getLayoutHtml()
         : null;
 
-      let res = await ${handlerName(route)}.get(req);
+      const method = ${handlerName(route)}[req.method.toLowerCase()]
+      if (!method) {
+        return new Response("404 Not Found", { status: 404, statusText: "Not Found" });
+      }
+      let res = await method(req);
 
       if (typeof res === "string") {
         res = new Html([""], [res])

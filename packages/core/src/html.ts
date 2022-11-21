@@ -8,9 +8,6 @@ export function html(strings: TemplateStringsArray, ...args: Arg[]) {
   return new Html(strings, args);
 }
 
-const r = new Request("https://test.test");
-r.headers.get("Accept");
-
 export class Html {
   private textEncoder = new TextEncoder();
 
