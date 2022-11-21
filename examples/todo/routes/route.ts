@@ -6,10 +6,8 @@ export function get(req: Request) {
 }
 
 // @ts-ignore
-const pocketScript = IS_WORKER
-  ? ""
-  : safeHtml`
-  <script src="/_pocket-register-worker.js"></script>
+const pocketScript = safeHtml`
+  <script src="/_pocket/runtime.js"></script>
 `;
 
 function template() {

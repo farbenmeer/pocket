@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "build": "pocket build",
-    "start": "pocket start"
+    "start": "pocket start",
+    "dev": "pocket dev"
   },
   "dependencies": {
     "pocket": "*"

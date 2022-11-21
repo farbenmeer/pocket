@@ -5,15 +5,18 @@ import * as path from "path";
 import nodeStatic from "node-static";
 
 export function getServerRuntime() {
+  console.log("getServerRuntime");
   const code = fs.readFileSync(
     path.resolve(process.cwd(), ".pocket/pocket-server.js"),
     {
       encoding: "utf-8",
     }
   );
+  console.log("create EdgeRuntime");
   const runtime = new EdgeRuntime({
     initialCode: code,
   });
+  console.log("EdgeRuntime done");
   return runtime;
 }
 
@@ -24,11 +27,12 @@ export function startServer() {
   );
 
   const server = http.createServer(async (req, res) => {
-    if (req.url === "/_pocket-register-worker.js") {
+    if (req.url === "/_pocket-runtime.js") {
+      const runtimeCode = await getRuntimeCode();
       res.writeHead(200, undefined, {
         "Content-Type": "application/javascript",
       });
-      res.end(registerWorkerCode);
+      res.end(runtimeCode);
       return;
     }
 
@@ -50,14 +54,20 @@ export function startServer() {
   });
 
   server.listen(3001);
+
+  return server;
 }
 
-const registerWorkerCode = `
-(() => {
-  if (typeof window !== "undefined" && "serviceWorker" in window.navigator) {
-      window.navigator.serviceWorker.register("/_pocket-worker.js", {
-        scope: "/",
-      });
+let runtimeCode: Promise<string> | null = null;
+export async function getRuntimeCode() {
+  if (runtimeCode) {
+    return runtimeCode;
   }
-})();
-`;
+  runtimeCode = fs.promises.readFile(
+    require.resolve("pocket/dist/runtime.js"),
+    {
+      encoding: "utf-8",
+    }
+  );
+  return runtimeCode;
+}

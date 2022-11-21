@@ -9,7 +9,8 @@
     "pocket": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc --module commonjs"
+    "build": "tsc --module commonjs",
+    "dev": "tsc --module commonjs --watch"
   },
   "dependencies": {
     "common-tags": "^1.8.2",

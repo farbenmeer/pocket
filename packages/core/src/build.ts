@@ -3,9 +3,8 @@ import { webpackConfig } from "./webpack.config.js";
 
 export async function build() {
   console.log("build it");
-  process.env.NODE_ENV = "production";
   await new Promise((resolve, reject) => {
-    webpack(webpackConfig(), (error, stats) => {
+    webpack(webpackConfig({ mode: "production" }), (error, stats) => {
       console.log("webpack is done");
       if (error) {
         console.error(error);

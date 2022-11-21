@@ -1,10 +1,12 @@
 import * as path from "path";
 import { Configuration, DefinePlugin } from "webpack";
 
-export const webpackConfig: () => Configuration[] = () => {
+export function webpackConfig(options: {
+  mode: Configuration["mode"];
+}): Configuration[] {
   const baseConfig = {
     entry: "val-loader!pocket/dist/router.js",
-    mode: process.env.NODE_ENV as any,
+    mode: options.mode,
     context: path.resolve(process.cwd(), ".pocket"),
     module: {
       rules: [
@@ -20,12 +22,17 @@ export const webpackConfig: () => Configuration[] = () => {
     },
   };
 
-  const workerConfig: Configuration = {
+  const clientConfig: Configuration = {
     ...baseConfig,
+    entry: {
+      "_pocket-worker": "val-loader!pocket/dist/router.js",
+      "_pocket/runtime": "pocket/dist/runtime.js",
+    },
     output: {
       path: path.resolve(process.cwd(), ".pocket/static"),
-      filename: "_pocket-worker.js",
+      filename: "[name].js",
     },
+    devtool: options.mode === "development" ? "eval-source-map" : "source-map",
     plugins: [
       new DefinePlugin({
         IS_WORKER: true,
@@ -40,6 +47,7 @@ export const webpackConfig: () => Configuration[] = () => {
       path: path.resolve(process.cwd(), ".pocket"),
       filename: "pocket-server.js",
     },
+    devtool: "source-map",
     plugins: [
       new DefinePlugin({
         IS_WORKER: false,
@@ -48,5 +56,5 @@ export const webpackConfig: () => Configuration[] = () => {
     ],
   };
 
-  return [workerConfig, serverConfig];
-};
+  return [clientConfig, serverConfig];
+}

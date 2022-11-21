@@ -6,6 +6,11 @@
       "dependsOn": ["^build"]
     },
     "start": {
+      "outputs": [],
+      "dependsOn": ["build"]
+    },
+    "dev": {
+      "outputs": [".pocket/**"],
       "dependsOn": ["build"]
     }
   }
