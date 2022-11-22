@@ -25,9 +25,13 @@ yargs(hideBin(process.argv))
   .command(
     "dev",
     "run dev server",
-    () => {},
-    () => {
-      startDevServer();
+    (yargs) => {
+      return yargs
+        .boolean("disable-worker")
+        .describe("disable-worker", "disable service worker");
+    },
+    (flags) => {
+      startDevServer({ disableWorker: flags["disable-worker"] });
     }
   )
   .demandCommand(1)

@@ -6,9 +6,14 @@ import { webpack } from "webpack";
 import { getServerRuntime } from "./server.js";
 import { webpackConfig } from "./webpack.config.js";
 
-export function startDevServer() {
+export function startDevServer(options?: { disableWorker?: boolean }) {
   console.log("startDevServer");
-  const compiler = webpack(webpackConfig({ mode: "development" }));
+  const compiler = webpack(
+    webpackConfig({
+      mode: "development",
+      disableWorker: options?.disableWorker,
+    })
+  );
 
   const sharedState: SharedState = {
     dynamicHandler: null,
@@ -64,6 +69,7 @@ export function startDevServer() {
           "Content-Type": "text/event-stream",
           Connection: "keep-alive",
           "Cache-Control": "no-cache",
+          Server: "Pocket Server",
         });
         function cb() {
           console.log("send event");
