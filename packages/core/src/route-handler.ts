@@ -17,10 +17,10 @@ export async function routeHandler(routes: Route[], req: Request) {
   const url = new URL(req.url);
 
   for (const { path, methods, layouts } of routes) {
-    console.log("route", { path, pathname: url.pathname });
     if (url.pathname !== path) {
       continue;
     }
+    console.log("route", { path, pathname: url.pathname });
     const preloadedLayoutHtml = req.headers
       .get("Accept")
       ?.startsWith("text/html")
@@ -39,6 +39,7 @@ export async function routeHandler(routes: Route[], req: Request) {
     }
 
     if (res instanceof Html) {
+      console.log("is html");
       const layoutHtml =
         preloadedLayoutHtml ?? layouts.map((layout) => layout(req));
 
@@ -46,19 +47,17 @@ export async function routeHandler(routes: Route[], req: Request) {
         res = layout.withChild(res);
       }
 
+      const headers = res.headers ?? new Headers();
+      headers.set("Content-Type", "text/html");
+
       res = new Response(res.renderToStream(), {
-        headers: { "Content-Type": "text/html" },
+        headers,
       });
     }
 
     res.headers.set("Server", getServerHeader());
 
+    console.log("retrrn", res.headers);
     return res;
-  }
-
-  if (process.env.POCKET_IS_SERVER) {
-    return notFound();
-  } else {
-    return fetch(req);
   }
 }

@@ -48,13 +48,13 @@ export default function generateRouter() {
 
   return {
     code: `
-      import { Html, outlet } from "pocket";
+      import { notFound } from "pocket";
       import { routeHandler } from "pocket/dist/route-handler";
       ${routeImports.join("\n")}
       ${layoutImports.join("\n")}
 
-      function fetchHandler(event) {
-        return event.respondWith(routeHandler([
+      async function fetchHandler(event) {
+        const res = await routeHandler([
           ${routes.map(
             (route) => `{
               path: ${JSON.stringify(route)},
@@ -68,7 +68,16 @@ export default function generateRouter() {
               ]
             }`
           )}
-        ], event.request))
+        ], event.request)
+
+        if (res) {
+          event.respondWith(res)
+          return
+        }
+
+        event.respondWith(${
+          process.env.POCKET_IS_SERVER ? "notFound()" : "fetch(req)"
+        })
       }
 
       addEventListener('fetch', fetchHandler)

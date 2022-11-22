@@ -1,21 +1,28 @@
 import { html } from "pocket";
 import * as cookie from "cookie";
+import { nanoid } from "nanoid";
+
+type Todo = {
+  id: string;
+  title: string;
+};
 
 // handles /
 export function get(req: Request) {
   const { "pocket-todos": rawTodos } = cookie.parse(
     req.headers.get("Cookie") ?? ""
   );
-  const todos: string[] = rawTodos ? JSON.parse(rawTodos) : [];
+  const todos: Todo[] = rawTodos ? JSON.parse(rawTodos) : [];
 
   return html`
     <h1>Pocket Todos</h1>
     <form method="POST">
+      <input type="hidden" name="id" value="${nanoid()}" />
       <input type="text" name="title" />
       <button>Add</button>
     </form>
     <ul>
-      ${todos.map((todo) => html`<li>${todo}</li>`)}
+      ${todos.map((todo) => html`<li>${todo.title}</li>`)}
     </ul>
   `;
 }
@@ -26,22 +33,31 @@ export async function post(req: Request) {
   const { "pocket-todos": rawTodos } = cookie.parse(
     req.headers.get("Cookie") ?? ""
   );
-  const todos: string[] = rawTodos ? JSON.parse(rawTodos) : [];
+  const todos: Todo[] = rawTodos ? JSON.parse(rawTodos) : [];
 
   const title = body.get("title")?.toString();
+  const id = body.get("id")?.toString();
 
-  if (title) {
-    todos.unshift(title);
+  if (id && title && !todos.some((todo) => todo.id === id)) {
+    todos.unshift({
+      id,
+      title,
+    });
   }
 
-  return html`
+  return html.withHeaders({
+    "Set-Cookie": cookie.serialize("pocket-todos", JSON.stringify(todos), {
+      path: "/",
+    }),
+  })`
     <h1>Pocket Todos</h1>
     <form method="POST">
+      <input type="hidden" name="id" value="${nanoid()}" />
       <input type="text" name="title" />
       <button>Add</button>
     </form>
     <ul>
-      ${todos.map((todo) => html`<li>${todo}</li>`)}
+      ${todos.map((todo) => html`<li>${todo.title}</li>`)}
     </ul>
   `;
 }

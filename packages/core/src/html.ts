@@ -1,4 +1,5 @@
 import escape from "escape-html";
+import { wrap } from "module";
 
 export const outlet = Symbol("Outlet");
 
@@ -8,13 +9,22 @@ export function html(strings: TemplateStringsArray, ...args: Arg[]) {
   return new Html(strings, args);
 }
 
+html.withHeaders = function withHeaders(init: HeadersInit) {
+  return function html(strings: TemplateStringsArray, ...args: Arg[]) {
+    const html = new Html(strings, args);
+    html.headers = new Headers(init);
+    return html;
+  };
+};
+
 export class Html {
   private textEncoder = new TextEncoder();
+  headers?: Headers;
 
   constructor(private strings: TemplateStringsArray, private args: Arg[]) {}
 
   withChild(child: Html): Html {
-    return new Html(
+    const wrapped = new Html(
       this.strings,
       this.args.map((arg) => {
         if (arg === outlet) {
@@ -23,6 +33,18 @@ export class Html {
         return arg;
       })
     );
+
+    if (this.headers || child.headers) {
+      wrapped.headers = new Headers();
+      this.headers?.forEach((value, key) =>
+        wrapped.headers?.append(key, value)
+      );
+      child.headers?.forEach((value, key) =>
+        wrapped.headers?.append(key, value)
+      );
+    }
+
+    return wrapped;
   }
 
   renderToStream(): ReadableStream {
