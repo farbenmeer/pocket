@@ -2,7 +2,7 @@ import escape from "escape-html";
 
 export const outlet = Symbol("Outlet");
 
-type Arg = string | typeof outlet | Html;
+type Arg = string | typeof outlet | Html | (string | Html)[];
 
 export function html(strings: TemplateStringsArray, ...args: Arg[]) {
   return new Html(strings, args);
@@ -42,22 +42,26 @@ export class Html {
             throw new Error("Outlets should only be used in layouts");
           }
 
-          if (arg instanceof Html) {
-            const childReader = arg.renderToStream().getReader();
-            while (true) {
-              const { done, value } = await childReader.read();
+          const argArr = Array.isArray(arg) ? arg : [arg];
 
-              if (done) {
-                break;
+          for (const arg of argArr) {
+            if (arg instanceof Html) {
+              const childReader = arg.renderToStream().getReader();
+              while (true) {
+                const { done, value } = await childReader.read();
+
+                if (done) {
+                  break;
+                }
+
+                controller.enqueue(value);
               }
-
-              controller.enqueue(value);
+              continue;
             }
-            continue;
-          }
 
-          if (arg) {
-            controller.enqueue(textEncoder.encode(escape(arg)));
+            if (arg) {
+              controller.enqueue(textEncoder.encode(escape(arg)));
+            }
           }
         }
         controller.close();
@@ -74,12 +78,16 @@ export class Html {
           throw new Error("Outlets should only be used in layouts");
         }
 
-        if (arg instanceof Html) {
-          return string + arg.toString();
-        }
+        const argArr = Array.isArray(arg) ? arg : [arg];
 
-        if (arg) {
-          return string + escape(arg);
+        for (const arg of argArr) {
+          if (arg instanceof Html) {
+            return string + arg.toString();
+          }
+
+          if (arg) {
+            return string + escape(arg);
+          }
         }
 
         return string;

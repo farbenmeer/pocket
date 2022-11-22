@@ -3,6 +3,17 @@
     return;
   }
 
+  if (process.env.POCKET_DISABLE_WORKER) {
+    const registrations =
+      await window.navigator.serviceWorker.getRegistrations();
+
+    for (const registration of registrations) {
+      registration.unregister();
+    }
+
+    return;
+  }
+
   const registration = await window.navigator.serviceWorker.register(
     "/_pocket-worker.js",
     {

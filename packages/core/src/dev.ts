@@ -95,7 +95,7 @@ export function startDevServer() {
       await sharedState.dynamicHandler!.handler(req, res);
     });
 
-    server.listen(3001);
+    server.listen(3000);
   }
 }
 

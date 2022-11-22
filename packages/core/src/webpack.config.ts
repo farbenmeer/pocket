@@ -4,6 +4,7 @@ import CopyPlugin from "copy-webpack-plugin";
 
 export function webpackConfig(options: {
   mode: Configuration["mode"];
+  disableWorker?: boolean;
 }): Configuration[] {
   const baseConfig = {
     entry: "val-loader!pocket/dist/router.js",
@@ -31,6 +32,9 @@ export function webpackConfig(options: {
           },
         ],
       }),
+      new DefinePlugin({
+        "process.env.POCKET_DISABLE_WORKER": options.disableWorker === true,
+      }),
     ],
   };
 
@@ -48,8 +52,8 @@ export function webpackConfig(options: {
     plugins: [
       ...baseConfig.plugins,
       new DefinePlugin({
-        IS_WORKER: true,
-        IS_SERVER: false,
+        "process.env.POCKET_IS_WORKER": true,
+        "process.env.POCKET_IS_SERVER": false,
       }),
     ],
   };
@@ -64,8 +68,8 @@ export function webpackConfig(options: {
     plugins: [
       ...baseConfig.plugins,
       new DefinePlugin({
-        IS_WORKER: false,
-        IS_SERVER: true,
+        "process.env.POCKET_IS_WORKER": false,
+        "process.env.POCKET_IS_SERVER": true,
       }),
     ],
   };

@@ -27,15 +27,6 @@ export function startServer() {
   );
 
   const server = http.createServer(async (req, res) => {
-    if (req.url === "/_pocket-runtime.js") {
-      const runtimeCode = await getRuntimeCode();
-      res.writeHead(200, undefined, {
-        "Content-Type": "application/javascript",
-      });
-      res.end(runtimeCode);
-      return;
-    }
-
     const err = await new Promise((resolve) => {
       staticHandler.serve(req, res, (err) => {
         resolve(err);
@@ -53,21 +44,7 @@ export function startServer() {
     await dynamicHandler.handler(req, res);
   });
 
-  server.listen(3001);
+  server.listen(3000);
 
   return server;
-}
-
-let runtimeCode: Promise<string> | null = null;
-export async function getRuntimeCode() {
-  if (runtimeCode) {
-    return runtimeCode;
-  }
-  runtimeCode = fs.promises.readFile(
-    require.resolve("pocket/dist/runtime.js"),
-    {
-      encoding: "utf-8",
-    }
-  );
-  return runtimeCode;
 }

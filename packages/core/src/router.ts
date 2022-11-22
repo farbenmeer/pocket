@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { Route } from "./route-handler";
 
 export default function generateRouter() {
   const basePath = path.resolve(process.cwd(), "routes");
@@ -45,73 +46,32 @@ export default function generateRouter() {
     `
   );
 
-  const handlers = routes.map(
-    (route) => `
-    if ("${route}" === url.pathname) {
-      function getLayoutHtml() {
-        return Promise.all([
-          ${layouts
-            .reverse()
-            .map((layout) => {
-              if (route.startsWith(layout)) {
-                console.log("match layout", { route, layout });
-                return `
-                  ${layoutName(layout)}(req),
-                `;
-              }
-              return "";
-            })
-            .join("")}
-        ])
-      }
-
-      const preloadedLayoutHtml = req.headers.get("Accept").startsWith("text/html")
-        ? getLayoutHtml()
-        : null;
-
-      const method = ${handlerName(route)}[req.method.toLowerCase()]
-      if (!method) {
-        return new Response("404 Not Found", { status: 404, statusText: "Not Found" });
-      }
-      let res = await method(req);
-
-      if (typeof res === "string") {
-        res = new Html([""], [res])
-      }
-
-      if (res instanceof Html) {
-        const layoutHtml = await (preloadedLayoutHtml ?? getLayoutHtml())
-        const aggregatedHtml = layoutHtml.reduce((agg, layout) => layout.withChild(agg), res)
-        res = new Response(aggregatedHtml.renderToStream(), { headers: { "Content-Type": "text/html" } })
-      }
-
-      return res
-    }`
-  );
-
   return {
     code: `
-      import { Html, outlet } from "pocket"
+      import { Html, outlet } from "pocket";
+      import { routeHandler } from "pocket/dist/route-handler";
       ${routeImports.join("\n")}
       ${layoutImports.join("\n")}
 
-      async function router(req) {
-          const url = new URL(req.url)
-
-          console.log('handle', url.pathname)
-
-          ${handlers.join("\n")}
-
-          if (IS_SERVER) {
-            return new Response("404 Not Found", { status: 404, statusText: "Not Found" });
-          } else {
-            return fetch(req)
-          }
+      function fetchHandler(event) {
+        return event.respondWith(routeHandler([
+          ${routes.map(
+            (route) => `{
+              path: ${JSON.stringify(route)},
+              methods: ${handlerName(route)},
+              layouts: [
+                ${layouts
+                  .filter((layout) => route.startsWith(layout))
+                  .reverse()
+                  .map((layout) => layoutName(layout))
+                  .join(",")}
+              ]
+            }`
+          )}
+        ], event.request))
       }
 
-      addEventListener('fetch', event => {
-          return event.respondWith(router(event.request))
-      })
+      addEventListener('fetch', fetchHandler)
     `,
     dependencies: routes.map((route) =>
       path.resolve(basePath, route, "route.ts")
