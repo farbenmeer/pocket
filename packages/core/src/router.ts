@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import { Route } from "./route-handler";
 
 export default function generateRouter() {
   const basePath = path.resolve(process.cwd(), "routes");
@@ -76,7 +75,7 @@ export default function generateRouter() {
         }
 
         event.respondWith(${
-          process.env.POCKET_IS_SERVER ? "notFound()" : "fetch(req)"
+          process.env.POCKET_IS_SERVER ? "notFound()" : "fetch(event.request)"
         })
       }
 
