@@ -9,6 +9,7 @@ type Todo = {
 
 // handles /
 export function get(req: Request) {
+  console.log("headers", Array.from(req.headers.entries()));
   const { "pocket-todos": rawTodos } = cookie.parse(
     req.headers.get("Cookie") ?? ""
   );

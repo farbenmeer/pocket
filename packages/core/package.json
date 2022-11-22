@@ -16,10 +16,11 @@
     "copy-webpack-plugin": "^11.0.0",
     "edge-runtime": "^2.0.2",
     "escape-html": "^1.0.3",
+    "idb": "^7.1.1",
     "node-static": "^0.7.11",
-    "val-loader": "^5.0.0",
     "swc-loader": "^0.2.3",
     "typescript": "^4.9.3",
+    "val-loader": "^5.0.0",
     "webpack": "^5.75.0",
     "yargs": "^17.6.2"
   },

@@ -69,15 +69,7 @@ export default function generateRouter() {
           )}
         ], event.request)
 
-        if (res) {
-          event.respondWith(res)
-          return
-        }
-
-        console.log('is server', process.env.POCKET_IS_SERVER)
-        event.respondWith(
-          true ? notFound() : fetch(event.request)
-        )
+        event.respondWith(res)
       }
 
       addEventListener('fetch', fetchHandler)

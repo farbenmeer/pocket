@@ -60,4 +60,6 @@ export async function routeHandler(routes: Route[], req: Request) {
     console.log("retrrn", res.headers);
     return res;
   }
+
+  return process.env.POCKET_IS_SERVER ? notFound() : fetch(req);
 }
