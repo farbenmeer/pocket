@@ -42,18 +42,18 @@ export function parseCookie(cookie?: string | null): CookieOptions[] {
 export function serializeCookie(cookieOptions: CookieOptions): string {
   let cookie = `${cookieOptions.name}=${encodeURIComponent(
     cookieOptions.value
-  )};path=/`;
+  )};Path=/`;
 
   if (cookieOptions.expires) {
-    cookie += `;expires=${new Date(cookieOptions.expires).toUTCString()}`;
+    cookie += `;Expires=${new Date(cookieOptions.expires).toUTCString()}`;
   }
 
   if (cookieOptions.sameSite) {
-    cookie += `;sameSite=${cookieOptions.sameSite}`;
+    cookie += `;SameSite=${cookieOptions.sameSite}`;
   }
 
   if (cookieOptions.secure) {
-    cookie += ";secure";
+    cookie += ";Secure";
   }
 
   return cookie;
