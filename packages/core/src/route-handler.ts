@@ -1,4 +1,10 @@
+import {
+  CookieStore,
+  MemoryCookieStore,
+  PostMessageCookieStore,
+} from "./cookie-store";
 import { Html } from "./html";
+import { PocketRequest } from "./pocket-request";
 import { getServerHeader, notFound } from "./response-helpers";
 
 type MaybePromise<T> = Promise<T> | T;
@@ -13,7 +19,25 @@ export type Route = {
   layouts: Layout[];
 };
 
-export async function routeHandler(routes: Route[], req: Request) {
+let polyfilledCookieStore: CookieStore | null = null;
+
+if (process.env.POCKET_IS_WORKER) {
+  if (typeof cookieStore === "undefined") {
+    const postMessageCookieStore = new PostMessageCookieStore();
+    function installHandler(event: ExtendableEvent) {
+      event.waitUntil(postMessageCookieStore.init());
+    }
+    addEventListener("install", installHandler as any);
+  } else {
+    polyfilledCookieStore = cookieStore;
+  }
+}
+
+export async function routeHandler(routes: Route[], ev: FetchEvent) {
+  const cookieStore = process.env.POCKET_IS_WORKER
+    ? polyfilledCookieStore
+    : new MemoryCookieStore(ev.request.headers.get("Cookie") ?? "");
+  const req = new PocketRequest(ev.request, cookieStore!);
   const url = new URL(req.url);
 
   for (const { path, methods, layouts } of routes) {
@@ -55,6 +79,13 @@ export async function routeHandler(routes: Route[], req: Request) {
       });
     }
 
+    if (process.env.POCKET_IS_SERVER) {
+      console.log("set cookies");
+      for (const cookie of (cookieStore as MemoryCookieStore).serialize()) {
+        console.log("set", cookie);
+        res.headers.append("Set-Cookie", cookie);
+      }
+    }
     res.headers.set("Server", getServerHeader());
 
     console.log("retrrn", res.headers);

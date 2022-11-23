@@ -1,165 +1,214 @@
 import { IncomingMessage, ServerResponse } from "http";
 import { DBSchema, openDB } from "idb";
+import { WorkerPostMessage } from "./post-message";
 
 declare global {
   var cookieStore: any;
+  var clients: Clients;
 }
 
 export type CookieOptions = {
   name: string;
   value: string;
   expires?: number;
-  path?: string;
   secure?: boolean;
   sameSite?: "strict" | "lax" | "none";
   httpOnly?: boolean;
 };
 
-interface CookieStoreSchema extends DBSchema {
-  cookies: {
-    key: "cookies";
-    value: CookieOptions[];
-  };
+export interface CookieStore {
+  get(name: string): Promise<CookieOptions | undefined>;
+  set(
+    name: string,
+    value: string,
+    options?: Omit<CookieOptions, "name" | "value">
+  ): Promise<void>;
+  getAll(): Promise<CookieOptions[]>;
+  delete(name: string): Promise<void>;
 }
 
-interface StorageBackend {
-  get(): CookieOptions[] | Promise<CookieOptions[]>;
-  update(
-    cb: (cookies: CookieOptions[]) => CookieOptions[]
-  ): void | Promise<void>;
-  path: string;
+export function parseCookie(cookie?: string | null): CookieOptions[] {
+  return (
+    cookie?.split(";").map((cookie) => {
+      const equalSignIndex = cookie.indexOf("=");
+      return {
+        name: cookie.slice(0, equalSignIndex).trim(),
+        value: decodeURIComponent(cookie.slice(equalSignIndex).trim()),
+      };
+    }) ?? []
+  );
 }
 
-export class MemoryStorageBackend implements StorageBackend {
-  private _storage: CookieOptions[];
-  public readonly path: string;
+export function serializeCookie(cookieOptions: CookieOptions): string {
+  let cookie = `${cookieOptions.name}=${encodeURIComponent(
+    cookieOptions.value
+  )};path=/`;
 
-  constructor(req: IncomingMessage, res: ServerResponse) {
-    this._storage =
-      req.headers.cookie?.split(";").map((cookie) => {
-        const equalSignIndex = cookie.indexOf("=");
-        return {
-          name: cookie.slice(0, equalSignIndex).trim(),
-          value: cookie.slice(equalSignIndex).trim(),
-        };
-      }) ?? [];
-
-    this.path = req.url ? new URL(req.url).pathname : "/";
+  if (cookieOptions.expires) {
+    cookie += `;expires=${new Date(cookieOptions.expires).toUTCString()}`;
   }
 
-  get() {
-    return this._storage;
+  if (cookieOptions.sameSite) {
+    cookie += `;sameSite=${cookieOptions.sameSite}`;
   }
 
-  update(cb: (cookies: CookieOptions[]) => CookieOptions[]) {
-    this._storage = cb(this._storage);
-  }
-}
-
-class IdbStorageBackend implements StorageBackend {
-  private _db = openDB<CookieStoreSchema>("_pocket-cookie-store", 1);
-  path = "/";
-
-  async get() {
-    const db = await this._db;
-    const cookies = await db.get("cookies", "cookies");
-    return cookies ?? [];
+  if (cookieOptions.secure) {
+    cookie += ";secure";
   }
 
-  async update(cb: (cookies: CookieOptions[]) => CookieOptions[]) {
-    const db = await this._db;
-    const tx = db.transaction("cookies", "readwrite");
-    const cookies = (await tx.store.get("cookies")) ?? [];
-    tx.store.put(cb(cookies), "cookies");
+  return cookie;
+}
+
+export class MemoryCookieStore implements CookieStore {
+  private _original: CookieOptions[];
+  private _changed: CookieOptions[] = [];
+
+  constructor(cookie: string) {
+    this._original = parseCookie(cookie);
   }
-}
 
-function now() {
-  return Math.floor(Date.now() / 1000);
-}
+  get(name: string) {
+    const cookieOptions =
+      this._changed
+        .reverse()
+        .find((cookieOptions) => cookieOptions.name === name) ??
+      this._original
+        .reverse()
+        .find((cookieOptions) => cookieOptions.name === name);
 
-function isActive(cookie: CookieOptions) {
-  return !cookie.expires || cookie.expires > now();
-}
-
-class CookieStore {
-  constructor(private _backend: StorageBackend) {}
-
-  private matches(name: string, cookie: CookieOptions) {
-    if (cookie.name !== name) {
-      return false;
+    if (!cookieOptions) {
+      return Promise.resolve(undefined);
     }
 
-    if (cookie.path && cookie.path !== this._backend.path) {
-      return false;
+    if (!isActive(cookieOptions)) {
+      return Promise.resolve(undefined);
     }
 
-    return true;
+    return Promise.resolve(cookieOptions);
   }
 
-  private async getReduced() {
+  getAll() {
     const cookieMap = new Map<string, CookieOptions>();
-    for (const cookie of await this._backend.get()) {
-      const key = `${cookie.name};${cookie.path ?? this._backend.path}`;
+    for (const cookie of [...this._original, ...this._changed]) {
       if (isActive(cookie)) {
-        cookieMap.set(key, cookie);
+        cookieMap.set(cookie.name, cookie);
       } else {
-        cookieMap.delete(key);
+        cookieMap.delete(cookie.name);
       }
     }
+    return Promise.resolve(Array.from(cookieMap.values()));
+  }
+
+  set(
+    name: string,
+    value: string,
+    options?: Omit<CookieOptions, "name" | "value">
+  ) {
+    this._changed.push({ ...options, name, value });
+    return Promise.resolve();
+  }
+
+  delete(name: string) {
+    this._changed.push({ name, value: "", expires: Date.now() });
+    return Promise.resolve();
+  }
+
+  serialize(): string[] {
+    const cookieMap = new Map(
+      this._changed.map((cookieOptions) => [
+        cookieOptions.name,
+        serializeCookie(cookieOptions),
+      ])
+    );
+
     return Array.from(cookieMap.values());
   }
+}
 
-  async get(name: string) {
-    const cookies = await this.getReduced();
-    const cookie = cookies.find((cookie) => this.matches(name, cookie));
+export class PostMessageCookieStore implements CookieStore {
+  private _storage: Map<string, CookieOptions> | null = null;
 
-    if (!cookie) {
-      return undefined;
-    }
-    if (!isActive(cookie)) {
-      return undefined;
-    }
-
-    return cookie;
+  private async _getClient() {
+    const allClients = await clients.matchAll();
+    return allClients[0];
   }
 
-  async getAll(name: string) {
-    const cookies = await this.getReduced();
+  async init() {
+    const client = await this._getClient();
+    return new Promise<void>((resolve) => {
+      const handleMessage = (event: MessageEvent<WorkerPostMessage>) => {
+        switch (event.data.type) {
+          case "return-cookies": {
+            this._storage = new Map(
+              parseCookie(event.data.cookie).map((cookieOptions) => [
+                cookieOptions.name,
+                cookieOptions,
+              ])
+            );
+            resolve();
+            break;
+          }
+        }
+      };
+      addEventListener("message", handleMessage, { once: true });
+      client?.postMessage({ type: "get-cookies" });
+    });
+  }
 
-    if (!name) {
-      return cookies;
+  get(name: string) {
+    if (!this._storage) {
+      throw new Error("CookieStore was not initialized");
     }
-
-    return cookies.filter((cookie) => cookie.name === name);
+    return Promise.resolve(this._storage.get(name));
   }
 
   async set(
     name: string,
     value: string,
-    options: Omit<CookieOptions, "name" | "value"> & { maxAge?: number }
+    options?: Omit<CookieOptions, "name" | "value">
   ) {
-    return this._backend.update((cookies) => [
-      ...cookies,
-      { ...options, name, value },
-    ]);
+    if (options?.httpOnly) {
+      console.warn("Tried to set httpOnly cookie from a service worker");
+      return;
+    }
+    if (!this._storage) {
+      throw new Error("CookieStore was not initialized");
+    }
+
+    const cookieOptions = { ...options, name, value };
+    this._storage.set(name, cookieOptions);
+
+    const client = await this._getClient();
+    client?.postMessage({
+      type: "set-cookie",
+      cookie: serializeCookie(cookieOptions),
+    });
+  }
+
+  getAll() {
+    if (!this._storage) {
+      throw new Error("CookieStore was not initialized");
+    }
+
+    return Promise.resolve(Array.from(this._storage.values()));
   }
 
   async delete(name: string) {
-    return this._backend.update((cookies) => [
-      ...cookies,
-      { name, value: "", expires: now() },
-    ]);
+    if (!this._storage) {
+      throw new Error("CookieStore was not initialized");
+    }
+
+    this._storage.delete(name);
+    const client = await this._getClient();
+    client?.postMessage({
+      type: "set-cookie",
+      cookie: serializeCookie({ name, value: "", expires: Date.now() }),
+    });
   }
 }
 
-export const cookieStore = (() => {
-  if (process.env.IS_SERVER) {
-  }
+function isActive(cookie: CookieOptions) {
+  return !cookie.expires || cookie.expires > Date.now();
+}
 
-  if (process.env.IS_WORKER) {
-    if (typeof cookieStore !== "undefined") {
-      return cookieStore;
-    }
-  }
-})();
+export const getBackend = Symbol("getBackend");

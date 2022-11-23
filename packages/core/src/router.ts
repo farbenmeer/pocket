@@ -67,7 +67,7 @@ export default function generateRouter() {
               ]
             }`
           )}
-        ], event.request)
+        ], event)
 
         event.respondWith(res)
       }
