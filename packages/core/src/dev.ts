@@ -1,4 +1,4 @@
-import { createHandler } from "edge-runtime";
+import { createHandler, EdgeRuntime } from "edge-runtime";
 import * as http from "http";
 import nodeStatic from "node-static";
 import * as path from "path";
@@ -16,13 +16,12 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
   );
 
   const sharedState: SharedState = {
-    dynamicHandler: null,
+    runtime: null,
     rebuildCallbacks: new Set(),
     isRunning: false,
   };
 
   compiler.watch({}, (error, stats) => {
-    console.log("compiled", stats?.toJson("minimal"));
     if (error) {
       console.error(error);
       if (!sharedState.isRunning) {
@@ -43,27 +42,25 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
       console.warn(info.warnings);
     }
 
-    console.log("create handler");
-    sharedState.dynamicHandler = createHandler({ runtime: getServerRuntime() });
-    console.log("handler created");
+    sharedState.runtime = getServerRuntime();
     if (sharedState.isRunning) {
       sharedState.rebuildCallbacks.forEach((cb) => cb());
+      console.info("Rebuilt.");
     } else {
-      console.log("start the server now");
+      console.info("Starting the dev server...");
       startServer();
+      console.info("Server started.");
     }
   });
 
   function startServer() {
     sharedState.isRunning = true;
-    console.log("startServer");
     const staticHandler = new nodeStatic.Server(
       path.resolve(process.cwd(), ".pocket/static"),
       { cache: false }
     );
 
     const server = http.createServer(async (req, res) => {
-      console.log("handle", req.method, req.url);
       if (req.url === "/_pocket/dev-events") {
         res.writeHead(200, {
           "Content-Type": "text/event-stream",
@@ -71,8 +68,8 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
           "Cache-Control": "no-cache",
           Server: "Pocket Server",
         });
+
         function cb() {
-          console.log("send event");
           res.write("data: null\n\n");
         }
 
@@ -98,7 +95,10 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
         throw err;
       }
 
-      await sharedState.dynamicHandler!.handler(req, res);
+      const runtimeResponse = await sharedState.runtime!.dispatchFetch(
+        `http://${req.headers.host}${req.url}`,
+        {}
+      );
     });
 
     server.listen(3000);
@@ -107,7 +107,7 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
 
 type EdgeRuntimeHandler = ReturnType<typeof createHandler>;
 type SharedState = {
-  dynamicHandler: EdgeRuntimeHandler | null;
+  runtime: EdgeRuntime | null;
   rebuildCallbacks: Set<() => void>;
   isRunning: boolean;
 };

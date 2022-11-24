@@ -1,5 +1,6 @@
 import { createHandler, EdgeRuntime } from "edge-runtime";
 import * as httpMocks from "node-mocks-http";
+import { ResponseCookie, ResponseCookies } from "@edge-runtime/cookies";
 
 describe("edge runtime", () => {
   it("sets a cookie", async () => {
@@ -56,7 +57,37 @@ describe("edge runtime", () => {
 
     await handler(req, res);
 
-    console.log(res.getHeaders());
     expect(res.getHeader("Set-Cookie")).not.toContain("test=test");
+  });
+
+  it("sets a cookie through the ResponseCookies API", async () => {
+    const code = `
+        addEventListener("fetch", (evt) => {
+            const res = new Response(null)
+            const cookies = new ResponseCookies(res.headers)
+            cookies.set("test", "test")
+            evt.respondWith(res)
+        })
+    `;
+
+    const runtime = new EdgeRuntime({
+      initialCode: code,
+      extend(context) {
+        context.ResponseCookies = ResponseCookies;
+        return context;
+      },
+    });
+
+    const { handler } = createHandler({ runtime });
+
+    const req = httpMocks.createRequest();
+    const res = httpMocks.createResponse();
+
+    await handler(req, res);
+
+    console.log(res.getHeaders());
+    expect(res.getHeader("Set-Cookie")).toContainEqual(
+      expect.stringContaining("test=test")
+    );
   });
 });

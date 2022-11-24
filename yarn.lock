@@ -302,6 +302,11 @@
   resolved "https://registry.yarnpkg.com/@discoveryjs/json-ext/-/json-ext-0.5.7.tgz#1d572bfbbe14b7704e0ba0f39b74815b84870d70"
   integrity sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==
 
+"@edge-runtime/cookies@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@edge-runtime/cookies/-/cookies-3.0.2.tgz#a14f4a2eed7213632878dd8eb354ffa2a2278047"
+  integrity sha512-38i8f4UilIYc4LgCDVVmFQMj/0IuwwXM2y3XZjlbiV8vJDAK1ES4/L2MbxIWqLfW8+M3rR4gqThXM+SOzmN2vw==
+
 "@edge-runtime/format@1.1.0":
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/@edge-runtime/format/-/format-1.1.0.tgz#5a209221a8bae7791d6e465c480f146249d1e15f"
