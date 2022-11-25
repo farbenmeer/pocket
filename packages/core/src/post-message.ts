@@ -1,5 +1,3 @@
-import { CookieOptions } from "./cookie-store";
-
 export type ClientPostMessage =
   | {
       type: "set-cookie";

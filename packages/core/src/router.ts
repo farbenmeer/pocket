@@ -1,7 +1,9 @@
 import * as fs from "fs";
 import * as path from "path";
 
-export default function generateRouter() {
+export default function generateRouter(options: {
+  environment: "server" | "worker";
+}) {
   const basePath = path.resolve(process.cwd(), "routes");
   const routes: string[] = [];
   const layouts: string[] = [];
@@ -47,8 +49,9 @@ export default function generateRouter() {
 
   return {
     code: `
-      import { notFound } from "pocket";
-      import { routeHandler } from "pocket/dist/route-handler";
+      import { routeHandler } from "pocket/dist/route-handler-${
+        options.environment
+      }";
       ${routeImports.join("\n")}
       ${layoutImports.join("\n")}
 
@@ -74,9 +77,13 @@ export default function generateRouter() {
 
       addEventListener('fetch', fetchHandler)
     `,
-    dependencies: routes.map((route) =>
-      path.resolve(basePath, route, "route.ts")
-    ),
+    dependencies: routes
+      .map((route) => path.resolve(basePath, route.slice(1), "route.ts"))
+      .concat(
+        layouts.map((layout) =>
+          path.resolve(basePath, layout.slice(1), "layout.ts")
+        )
+      ),
   };
 }
 

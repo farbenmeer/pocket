@@ -16,7 +16,7 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
   );
 
   const sharedState: SharedState = {
-    runtime: null,
+    dynamicHandler: null,
     rebuildCallbacks: new Set(),
     isRunning: false,
   };
@@ -42,7 +42,7 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
       console.warn(info.warnings);
     }
 
-    sharedState.runtime = getServerRuntime();
+    sharedState.dynamicHandler = createHandler({ runtime: getServerRuntime() });
     if (sharedState.isRunning) {
       sharedState.rebuildCallbacks.forEach((cb) => cb());
       console.info("Rebuilt.");
@@ -95,10 +95,7 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
         throw err;
       }
 
-      const runtimeResponse = await sharedState.runtime!.dispatchFetch(
-        `http://${req.headers.host}${req.url}`,
-        {}
-      );
+      await sharedState.dynamicHandler!.handler(req, res);
     });
 
     server.listen(3000);
@@ -107,7 +104,7 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
 
 type EdgeRuntimeHandler = ReturnType<typeof createHandler>;
 type SharedState = {
-  runtime: EdgeRuntime | null;
+  dynamicHandler: EdgeRuntimeHandler | null;
   rebuildCallbacks: Set<() => void>;
   isRunning: boolean;
 };

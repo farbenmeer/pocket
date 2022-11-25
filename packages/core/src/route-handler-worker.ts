@@ -1,8 +1,3 @@
-import {
-  CookieStore,
-  MemoryCookieStore,
-  PostMessageCookieStore,
-} from "./cookie-store";
 import { Html } from "./html";
 import { PocketRequest } from "./pocket-request";
 import { getServerHeader, notFound } from "./response-helpers";
@@ -19,25 +14,8 @@ export type Route = {
   layouts: Layout[];
 };
 
-let polyfilledCookieStore: CookieStore | null = null;
-
-if (process.env.POCKET_IS_WORKER) {
-  if (typeof cookieStore === "undefined") {
-    const postMessageCookieStore = new PostMessageCookieStore();
-    function installHandler(event: ExtendableEvent) {
-      event.waitUntil(postMessageCookieStore.init());
-    }
-    addEventListener("install", installHandler as any);
-  } else {
-    polyfilledCookieStore = cookieStore;
-  }
-}
-
 export async function routeHandler(routes: Route[], ev: FetchEvent) {
-  const cookieStore = process.env.POCKET_IS_WORKER
-    ? polyfilledCookieStore
-    : new MemoryCookieStore(ev.request.headers.get("Cookie") ?? "");
-  const req = new PocketRequest(ev.request, cookieStore!);
+  const req = new PocketRequest(ev.request);
   const url = new URL(req.url);
 
   for (const { path, methods, layouts } of routes) {
@@ -79,18 +57,11 @@ export async function routeHandler(routes: Route[], ev: FetchEvent) {
       });
     }
 
-    if (process.env.POCKET_IS_SERVER) {
-      console.log("set cookies");
-      for (const cookie of (cookieStore as MemoryCookieStore).serialize()) {
-        console.log("set", cookie);
-        res.headers.append("Set-Cookie", cookie);
-      }
-    }
-    res.headers.set("Server", getServerHeader());
+    res.headers.set("Server", "Pocket Worker");
 
     console.log("retrrn", res.headers);
     return res;
   }
 
-  return process.env.POCKET_IS_SERVER ? notFound() : fetch(req);
+  return fetch(req);
 }

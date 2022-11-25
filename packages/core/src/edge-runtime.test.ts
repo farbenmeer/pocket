@@ -1,6 +1,6 @@
+import { RequestCookies, ResponseCookies } from "@edge-runtime/cookies";
 import { createHandler, EdgeRuntime } from "edge-runtime";
 import * as httpMocks from "node-mocks-http";
-import { ResponseCookie, ResponseCookies } from "@edge-runtime/cookies";
 
 describe("edge runtime", () => {
   it("sets a cookie", async () => {
@@ -89,5 +89,13 @@ describe("edge runtime", () => {
     expect(res.getHeader("Set-Cookie")).toContainEqual(
       expect.stringContaining("test=test")
     );
+  });
+
+  it("counts cookies", async () => {
+    const requestCookies = new RequestCookies(
+      new Headers({ Cookie: "test=test;a=b;c=d" })
+    );
+
+    expect(requestCookies.size).toBe(3);
   });
 });

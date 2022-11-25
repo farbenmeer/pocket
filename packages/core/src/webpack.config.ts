@@ -7,7 +7,6 @@ export function webpackConfig(options: {
   disableWorker?: boolean;
 }): Configuration[] {
   const baseConfig = {
-    entry: "val-loader!pocket/dist/router.js",
     mode: options.mode,
     context: path.resolve(process.cwd(), ".pocket"),
     module: {
@@ -41,7 +40,7 @@ export function webpackConfig(options: {
   const clientConfig: Configuration = {
     ...baseConfig,
     entry: {
-      "_pocket-worker": "val-loader!pocket/dist/router.js",
+      "_pocket-worker": "val-loader?environment=worker!pocket/dist/router.js",
       "_pocket/runtime": "pocket/dist/runtime.js",
     },
     output: {
@@ -60,6 +59,7 @@ export function webpackConfig(options: {
 
   const serverConfig: Configuration = {
     ...baseConfig,
+    entry: "val-loader?environment=server!pocket/dist/router.js",
     output: {
       path: path.resolve(process.cwd(), ".pocket"),
       filename: "pocket-server.js",
