@@ -4,6 +4,7 @@ import { html, PocketRequest, PocketResponse } from "pocket";
 type Todo = {
   id: string;
   title: string;
+  done: boolean;
 };
 
 function template(todos: Todo[]) {
@@ -15,7 +16,18 @@ function template(todos: Todo[]) {
       <button>Add</button>
     </form>
     <ul>
-      ${todos.map((todo) => html`<li>${todo.title}</li>`)}
+      ${todos.map((todo) => {
+        const onchange = `location.replace('?${
+          todo.done ? "uncheck" : "check"
+        }=${todo.id}')`;
+        return html`<li>
+          <input
+            type="checkbox"
+            ${todo.done ? "checked" : ""}
+            onchange="${onchange}"
+          />${todo.title}
+        </li>`;
+      })}
     </ul>
   `;
 }
@@ -24,6 +36,17 @@ function template(todos: Todo[]) {
 export async function get(req: PocketRequest) {
   const rawTodos = req.cookies.get("pocket-todos")?.value;
   const todos: Todo[] = rawTodos ? JSON.parse(rawTodos) : [];
+
+  const url = new URL(req.url);
+  const check = url.searchParams.get("check");
+  const uncheck = url.searchParams.get("uncheck");
+  const todo = todos.find((todo) => todo.id === check || todo.id === uncheck);
+  if (todo) {
+    todo.done = Boolean(check);
+    const res = new PocketResponse(template(todos));
+    res.cookies.set("pocket-todos", JSON.stringify(todos));
+    return res;
+  }
 
   return template(todos);
 }
@@ -41,6 +64,7 @@ export async function post(req: PocketRequest) {
     todos.unshift({
       id,
       title,
+      done: false,
     });
   }
 
