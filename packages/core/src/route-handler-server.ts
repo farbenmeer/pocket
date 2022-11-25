@@ -1,18 +1,7 @@
-import { Html } from "./html";
 import { PocketRequest } from "./pocket-request";
-import { getServerHeader, notFound } from "./response-helpers";
-
-type MaybePromise<T> = Promise<T> | T;
-type MethodHandler = (
-  req: Request
-) => MaybePromise<string> | MaybePromise<Html> | MaybePromise<Response>;
-type Layout = (req: Request) => MaybePromise<Html>;
-
-export type Route = {
-  path: string;
-  methods: Record<string, MethodHandler>;
-  layouts: Layout[];
-};
+import { PocketResponse } from "./pocket-response";
+import { notFound } from "./response-helpers";
+import { Route } from "./route-handler-common";
 
 export async function routeHandler(routes: Route[], ev: FetchEvent) {
   const req = new PocketRequest(ev.request);
@@ -36,25 +25,22 @@ export async function routeHandler(routes: Route[], ev: FetchEvent) {
 
     let res = await method(req);
 
-    if (typeof res === "string") {
-      res = new Html(Object.assign([""], { raw: [""] }), [res]);
+    if (!(res instanceof Response)) {
+      res = new PocketResponse(res);
     }
 
-    if (res instanceof Html) {
+    if (res instanceof PocketResponse && res._htmlBody) {
       console.log("is html");
       const layoutHtml =
         preloadedLayoutHtml ?? layouts.map((layout) => layout(req));
 
+      let html = res._htmlBody;
+
       for await (const layout of layoutHtml) {
-        res = layout.withChild(res);
+        html = layout.withChild(html);
       }
 
-      const headers = res.headers ?? new Headers();
-      headers.set("Content-Type", "text/html");
-
-      res = new Response(res.renderToStream(), {
-        headers,
-      });
+      res = new PocketResponse(html.renderToStream(), res);
     }
 
     res.headers.set("Server", "Pocket Server");

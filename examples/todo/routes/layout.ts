@@ -1,4 +1,5 @@
 import { html, outlet, pocketScript } from "pocket";
+import { navigation } from "./navigation";
 
 export function layout() {
   return html`
@@ -12,7 +13,7 @@ export function layout() {
         ${pocketScript}
       </head>
       <body>
-        ${outlet}
+        ${navigation()} ${outlet}
       </body>
     </html>
   `;

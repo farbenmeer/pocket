@@ -4,9 +4,18 @@ import { Html } from "./html";
 
 export class PocketResponse extends Response {
   public cookies: ResponseCookies;
+  public _htmlBody?: Html;
 
   constructor(body?: BodyInit | Html | null, init?: ResponseInit) {
-    super(body instanceof Html ? null : body, init);
+    if (typeof body === "string") {
+      super(null, init);
+      this._htmlBody = new Html([body] as unknown as TemplateStringsArray, []);
+    } else if (body instanceof Html) {
+      super(null, init);
+      this._htmlBody = body;
+    } else {
+      super(body, init);
+    }
 
     const headers = this.headers;
 

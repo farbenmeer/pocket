@@ -20,6 +20,7 @@ export function webpackConfig(options: {
     },
     resolve: {
       extensions: [".tsx", ".ts", ".jsx", ".js"],
+      modules: [process.cwd(), "node_modules"],
     },
     plugins: [
       new CopyPlugin({

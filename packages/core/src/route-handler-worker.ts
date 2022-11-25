@@ -1,21 +1,27 @@
+import { getCookiesFromClient, setCookiesOnClient } from "./cookies";
 import { Html } from "./html";
 import { PocketRequest } from "./pocket-request";
-import { getServerHeader, notFound } from "./response-helpers";
+import { PocketResponse } from "./pocket-response";
+import { notFound } from "./response-helpers";
+import { Route } from "./route-handler-common";
 
-type MaybePromise<T> = Promise<T> | T;
-type MethodHandler = (
-  req: Request
-) => MaybePromise<string> | MaybePromise<Html> | MaybePromise<Response>;
-type Layout = (req: Request) => MaybePromise<Html>;
+async function getClient(evt: FetchEvent): Promise<Client | undefined> {
+  const clients = (self as any).clients as Clients;
+  const client =
+    (await clients.get(evt.resultingClientId)) ??
+    (await clients.get(evt.clientId));
 
-export type Route = {
-  path: string;
-  methods: Record<string, MethodHandler>;
-  layouts: Layout[];
-};
+  return client;
+}
 
-export async function routeHandler(routes: Route[], ev: FetchEvent) {
-  const req = new PocketRequest(ev.request);
+export async function routeHandler(routes: Route[], evt: FetchEvent) {
+  const client = await getClient(evt);
+  if (!client) {
+    return new Response();
+  }
+  const cookie = await getCookiesFromClient(client);
+
+  const req = new PocketRequest(evt.request, cookie);
   const url = new URL(req.url);
 
   for (const { path, methods, layouts } of routes) {
@@ -36,28 +42,31 @@ export async function routeHandler(routes: Route[], ev: FetchEvent) {
 
     let res = await method(req);
 
-    if (typeof res === "string") {
-      res = new Html(Object.assign([""], { raw: [""] }), [res]);
+    if (!(res instanceof Response)) {
+      res = new PocketResponse(res);
     }
 
-    if (res instanceof Html) {
+    if (res instanceof PocketResponse && res._htmlBody) {
       console.log("is html");
       const layoutHtml =
         preloadedLayoutHtml ?? layouts.map((layout) => layout(req));
 
+      let html = res._htmlBody;
+
       for await (const layout of layoutHtml) {
-        res = layout.withChild(res);
+        html = layout.withChild(html);
       }
 
-      const headers = res.headers ?? new Headers();
-      headers.set("Content-Type", "text/html");
-
-      res = new Response(res.renderToStream(), {
-        headers,
-      });
+      res = new PocketResponse(html.renderToStream(), res);
     }
 
     res.headers.set("Server", "Pocket Worker");
+
+    const client = await getClient(evt);
+    const cookie = res.headers.get("Set-Cookie");
+    if (client && cookie) {
+      setCookiesOnClient(client, cookie);
+    }
 
     console.log("retrrn", res.headers);
     return res;

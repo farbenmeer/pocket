@@ -1,18 +1,12 @@
-import { html, PocketRequest } from "pocket";
-import * as cookie from "cookie";
 import { nanoid } from "nanoid";
+import { html, PocketRequest, PocketResponse } from "pocket";
 
 type Todo = {
   id: string;
   title: string;
 };
 
-// handles /
-export async function get(req: PocketRequest) {
-  console.log("headers", Array.from(req.headers.entries()));
-  const rawTodos = (await req.cookies.get("pocket-todos"))?.value;
-  const todos: Todo[] = rawTodos ? JSON.parse(rawTodos) : [];
-
+function template(todos: Todo[]) {
   return html`
     <h1>Pocket Todos</h1>
     <form method="POST">
@@ -26,10 +20,18 @@ export async function get(req: PocketRequest) {
   `;
 }
 
+// handles /
+export async function get(req: PocketRequest) {
+  const rawTodos = req.cookies.get("pocket-todos")?.value;
+  const todos: Todo[] = rawTodos ? JSON.parse(rawTodos) : [];
+
+  return template(todos);
+}
+
 export async function post(req: PocketRequest) {
   const body = await req.formData();
 
-  const rawTodos = (await req.cookies.get("pocket-todos"))?.value;
+  const rawTodos = req.cookies.get("pocket-todos")?.value;
   const todos: Todo[] = rawTodos ? JSON.parse(rawTodos) : [];
 
   const title = body.get("title")?.toString();
@@ -42,17 +44,9 @@ export async function post(req: PocketRequest) {
     });
   }
 
-  await req.cookies.set("pocket-todos", JSON.stringify(todos));
+  const res = new PocketResponse(template(todos));
 
-  return html`
-    <h1>Pocket Todos</h1>
-    <form method="POST">
-      <input type="hidden" name="id" value="${nanoid()}" />
-      <input type="text" name="title" />
-      <button>Add</button>
-    </form>
-    <ul>
-      ${todos.map((todo) => html`<li>${todo.title}</li>`)}
-    </ul>
-  `;
+  res.cookies.set("pocket-todos", JSON.stringify(todos));
+
+  return res;
 }
