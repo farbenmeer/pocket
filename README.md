@@ -15,16 +15,14 @@ yarn build
 
 ## run
 the prod server for the example app
-after build
 ```bash
 yarn start
 ```
 then open [the todo-app](http://localhost:3000)
 
 ## develop
-you will need to run `yarn build` once, then
+the dev server will watch all dirs and even re-render
+the example app when the framework is changed.
 ```bash
 yarn dev
 ```
-after that the dev server will
-watch all dirs and even re-render the example app when the framework is changed.
