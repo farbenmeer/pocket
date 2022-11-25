@@ -26,3 +26,9 @@ the example app when the framework is changed.
 ```bash
 yarn dev
 ```
+
+If you need to see the output from the server instead of the worker go to `examples/todo`
+and run
+```bash
+yarn dev --disable-worker
+```
