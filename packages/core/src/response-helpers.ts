@@ -1,17 +1,7 @@
-export function notFound() {
+export function notFound(init: ResponseInit = {}) {
   return new Response("404 Not Found", {
     status: 404,
     statusText: "Not Found",
-    headers: {
-      Server: getServerHeader(),
-    },
+    ...init,
   });
-}
-
-export function getServerHeader() {
-  if (process.env.POCKET_IS_SERVER) {
-    return "Pocket Server";
-  }
-
-  return "Pocket Worker";
 }

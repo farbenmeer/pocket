@@ -7,7 +7,7 @@ export class PocketRequest extends Request {
   constructor(req: Request, cookie?: string | null) {
     super(req);
 
-    const headers = req.headers;
+    const headers = new Headers();
     if (cookie) {
       headers.set("Cookie", cookie);
     }

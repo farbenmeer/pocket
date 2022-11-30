@@ -2,7 +2,7 @@ import { html } from "pocket";
 import { table } from "components/table";
 
 // handles /contact
-export function get(req: Request) {
+export function page() {
   return html`
     <main>
       ${table({

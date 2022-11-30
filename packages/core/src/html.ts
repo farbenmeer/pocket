@@ -1,51 +1,23 @@
 import escape from "escape-html";
-import { wrap } from "module";
+import { MaybeArray, MaybePromise } from "./types";
 
-export const outlet = Symbol("Outlet");
-
-type Arg = string | typeof outlet | Html | (string | Html)[];
+type Arg = MaybeArray<MaybePromise<string | Html | null | false | number>>;
 
 export function html(strings: TemplateStringsArray, ...args: Arg[]) {
   return new Html(strings, args);
 }
 
-html.withHeaders = function withHeaders(init: HeadersInit) {
-  return function html(strings: TemplateStringsArray, ...args: Arg[]) {
-    const html = new Html(strings, args);
-    html.headers = new Headers(init);
-    return html;
-  };
+html.raw = function raw(content: string) {
+  return new Html([content], []);
 };
 
 export class Html {
   private textEncoder = new TextEncoder();
-  headers?: Headers;
 
-  constructor(private strings: TemplateStringsArray, private args: Arg[]) {}
-
-  withChild(child: Html): Html {
-    const wrapped = new Html(
-      this.strings,
-      this.args.map((arg) => {
-        if (arg === outlet) {
-          return child;
-        }
-        return arg;
-      })
-    );
-
-    if (this.headers || child.headers) {
-      wrapped.headers = new Headers();
-      this.headers?.forEach((value, key) =>
-        wrapped.headers?.append(key, value)
-      );
-      child.headers?.forEach((value, key) =>
-        wrapped.headers?.append(key, value)
-      );
-    }
-
-    return wrapped;
-  }
+  constructor(
+    private strings: string[] | TemplateStringsArray,
+    private args: Arg[]
+  ) {}
 
   renderToStream(): ReadableStream {
     const strings = this.strings;
@@ -58,17 +30,31 @@ export class Html {
           const string = strings[index];
           const arg = args[index];
 
-          controller.enqueue(textEncoder.encode(string));
-
-          if (arg === outlet) {
-            throw new Error("Outlets should only be used in layouts");
+          if (string) {
+            controller.enqueue(textEncoder.encode(string));
           }
 
           const argArr = Array.isArray(arg) ? arg : [arg];
 
           for (const arg of argArr) {
-            if (arg instanceof Html) {
-              const childReader = arg.renderToStream().getReader();
+            const value = await arg;
+
+            if (!value) {
+              continue;
+            }
+
+            if (typeof value === "string") {
+              controller.enqueue(textEncoder.encode(escape(value)));
+              continue;
+            }
+
+            if (typeof value === "number") {
+              controller.enqueue(textEncoder.encode(value.toString()));
+              continue;
+            }
+
+            if (value instanceof Html) {
+              const childReader = value.renderToStream().getReader();
               while (true) {
                 const { done, value } = await childReader.read();
 
@@ -81,9 +67,7 @@ export class Html {
               continue;
             }
 
-            if (arg) {
-              controller.enqueue(textEncoder.encode(escape(arg)));
-            }
+            throw new TypeError("Argument is not of any allowed type");
           }
         }
         controller.close();
@@ -91,30 +75,11 @@ export class Html {
     });
   }
 
-  toString(): string {
-    return this.strings
-      .map((string, index) => {
-        const arg = this.args[index];
-
-        if (arg === outlet) {
-          throw new Error("Outlets should only be used in layouts");
-        }
-
-        const argArr = Array.isArray(arg) ? arg : [arg];
-
-        for (const arg of argArr) {
-          if (arg instanceof Html) {
-            return string + arg.toString();
-          }
-
-          if (arg) {
-            return string + escape(arg);
-          }
-        }
-
-        return string;
-      })
-      .join("");
+  static from(arg: Arg): Html {
+    if (arg instanceof Html) {
+      return arg;
+    }
+    return new Html([""], [arg]);
   }
 }
 

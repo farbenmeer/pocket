@@ -5,9 +5,17 @@ export type ClientPostMessage =
     }
   | {
       type: "get-cookies";
+      requestId: number;
     };
 
-export type WorkerPostMessage = {
-  type: "return-cookies";
-  cookie: string;
-};
+export type WorkerPostMessage =
+  | {
+      type: "return-cookies";
+      requestId: number;
+      cookie: string;
+    }
+  | {
+      type: "send-cookies";
+      cookie: string;
+      path: string;
+    };

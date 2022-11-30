@@ -1,5 +1,10 @@
 import { nanoid } from "nanoid";
-import { html, PocketRequest, PocketResponse } from "pocket";
+import {
+  html,
+  PocketPageContext,
+  PocketResponse,
+  PocketRouteContext,
+} from "pocket";
 
 type Todo = {
   id: string;
@@ -7,7 +12,11 @@ type Todo = {
   done: boolean;
 };
 
-function template(todos: Todo[]) {
+type Props = {
+  todos: Todo[];
+};
+
+export function page({ props }: PocketPageContext<Props>) {
   return html`
     <h1>Pocket Todos</h1>
     <form method="POST">
@@ -16,10 +25,11 @@ function template(todos: Todo[]) {
       <button>Add</button>
     </form>
     <ul>
-      ${todos.map((todo) => {
+      ${props.todos.map((todo) => {
         const onchange = `location.replace('?${
           todo.done ? "uncheck" : "check"
         }=${todo.id}')`;
+
         return html`<li>
           <input
             type="checkbox"
@@ -33,7 +43,7 @@ function template(todos: Todo[]) {
 }
 
 // handles /
-export async function get(req: PocketRequest) {
+export async function get({ req, render }: PocketRouteContext<Props>) {
   const rawTodos = req.cookies.get("pocket-todos")?.value;
   const todos: Todo[] = rawTodos ? JSON.parse(rawTodos) : [];
 
@@ -43,15 +53,15 @@ export async function get(req: PocketRequest) {
   const todo = todos.find((todo) => todo.id === check || todo.id === uncheck);
   if (todo) {
     todo.done = Boolean(check);
-    const res = new PocketResponse(template(todos));
+    const res = new PocketResponse(render({ todos }));
     res.cookies.set("pocket-todos", JSON.stringify(todos));
     return res;
   }
 
-  return template(todos);
+  return render({ todos });
 }
 
-export async function post(req: PocketRequest) {
+export async function post({ req, render }: PocketRouteContext<Props>) {
   const body = await req.formData();
 
   const rawTodos = req.cookies.get("pocket-todos")?.value;
@@ -68,7 +78,7 @@ export async function post(req: PocketRequest) {
     });
   }
 
-  const res = new PocketResponse(template(todos));
+  const res = new PocketResponse(render({ todos }));
 
   res.cookies.set("pocket-todos", JSON.stringify(todos));
 

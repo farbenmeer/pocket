@@ -34,21 +34,23 @@ import { ClientPostMessage, WorkerPostMessage } from "./post-message";
     }
   );
 
+  const message: WorkerPostMessage = {
+    type: "send-cookies",
+    cookie: window.document.cookie,
+    path: window.location.pathname,
+  };
+  registration.installing?.postMessage(message);
+  registration.active?.postMessage(message);
+
   window.navigator.serviceWorker.addEventListener(
     "message",
     async (event: MessageEvent<ClientPostMessage>) => {
+      console.log("runtime got", event.data);
       switch (event.data.type) {
         case "set-cookie": {
           const { cookie } = event.data;
           window.document.cookie = cookie;
           return;
-        }
-
-        case "get-cookies": {
-          event.source?.postMessage({
-            type: "return-cookies",
-            cookie: window.document.cookie,
-          });
         }
       }
     }

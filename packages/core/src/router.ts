@@ -39,7 +39,7 @@ export default function generateRouter(options: {
   );
   const layoutImports = layouts.map(
     (layout) => `
-    import { layout as ${layoutName(layout)} } from "${path.resolve(
+    import * as ${layoutName(layout)} from "${path.resolve(
       basePath,
       layout.slice(1),
       "layout.ts"
@@ -49,33 +49,31 @@ export default function generateRouter(options: {
 
   return {
     code: `
-      import { routeHandler } from "pocket/dist/route-handler-${
+      import { setupRouteHandler } from "pocket/dist/route-handler-${
         options.environment
       }";
       ${routeImports.join("\n")}
       ${layoutImports.join("\n")}
 
-      async function fetchHandler(event) {
-        const res = await routeHandler([
-          ${routes.map(
-            (route) => `{
-              path: ${JSON.stringify(route)},
-              methods: ${handlerName(route)},
-              layouts: [
-                ${layouts
-                  .filter((layout) => route.startsWith(layout))
-                  .reverse()
-                  .map((layout) => layoutName(layout))
-                  .join(",")}
-              ]
-            }`
-          )}
-        ], event)
-
-        event.respondWith(res)
-      }
-
-      addEventListener('fetch', fetchHandler)
+      setupRouteHandler([
+        ${routes.map(
+          (route) => `{
+            path: ${JSON.stringify(route)},
+            methods: ${handlerName(route)},
+            layouts: [
+              ${layouts
+                .filter((layout) => route.startsWith(layout))
+                .map(
+                  (layout) =>
+                    `{ path: "${layout}", layout: ${layoutName(
+                      layout
+                    )}.layout }`
+                )
+                .join(",")}
+            ]
+          }`
+        )}
+      ])
     `,
     dependencies: routes
       .map((route) => path.resolve(basePath, route.slice(1), "route.ts"))

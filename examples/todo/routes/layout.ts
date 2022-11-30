@@ -1,7 +1,7 @@
-import { html, outlet, pocketScript } from "pocket";
+import { html, PocketLayoutContext, pocketScript } from "pocket";
 import { navigation } from "./navigation";
 
-export function layout() {
+export function layout({ children }: PocketLayoutContext) {
   return html`
     <!DOCTYPE html>
     <html lang="en">
@@ -13,7 +13,7 @@ export function layout() {
         ${pocketScript}
       </head>
       <body>
-        ${navigation()} ${outlet}
+        ${navigation()} ${children}
       </body>
     </html>
   `;
