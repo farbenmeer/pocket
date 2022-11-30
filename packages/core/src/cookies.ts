@@ -20,6 +20,8 @@ if (process.env.POCKET_IS_WORKER) {
 async function getClient(clientId: string): Promise<Client | undefined> {
   const clients = (self as any).clients as Clients;
 
+  return clients.get(clientId);
+
   const allClients = await clients.matchAll({ type: "window" });
 
   return allClients[0];
