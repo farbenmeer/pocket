@@ -49,9 +49,9 @@ export default function generateRouter(options: {
 
   return {
     code: `
-      import { setupRouteHandler } from "pocket/dist/route-handler-${
+      import { setupRouteHandler } from "pocket/dist/${
         options.environment
-      }";
+      }/route-handler";
       ${routeImports.join("\n")}
       ${layoutImports.join("\n")}
 

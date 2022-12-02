@@ -1,4 +1,4 @@
-import { ClientPostMessage, WorkerPostMessage } from "./post-message";
+import { ClientPostMessage, WorkerPostMessage } from "./worker/post-message";
 
 (async () => {
   if (process.env.NODE_ENV === "development") {
@@ -37,6 +37,11 @@ import { ClientPostMessage, WorkerPostMessage } from "./post-message";
           window.document.cookie = cookie;
           return;
         }
+        case "set-cookies":
+          const { cookies } = event.data;
+          for (const cookie of cookies) {
+            window.document.cookie = cookie;
+          }
       }
     }
   );
@@ -48,13 +53,24 @@ import { ClientPostMessage, WorkerPostMessage } from "./post-message";
     }
   );
 
-  const message: WorkerPostMessage = {
-    type: "send-cookies",
-    cookie: window.document.cookie,
-    path: window.location.pathname,
-  };
-  registration.installing?.postMessage(message);
-  registration.active?.postMessage(message);
+  const environment =
+    document.head
+      .querySelector("script#pocket-runtime")
+      ?.getAttribute("data-env") === "server"
+      ? "server"
+      : "worker";
+
+  console.log("env is", environment);
+
+  if (environment === "server") {
+    const message: WorkerPostMessage = {
+      type: "send-cookies",
+      cookie: window.document.cookie,
+      path: window.location.pathname,
+    };
+    registration.installing?.postMessage(message);
+    registration.active?.postMessage(message);
+  }
 })();
 
 export type {};

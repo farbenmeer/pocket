@@ -1,9 +1,10 @@
 import { DBSchema, openDB } from "idb";
+import { ResponseCookie } from "../cookies";
 
 interface PocketSchema extends DBSchema {
   cookies: {
     key: string;
-    value: string;
+    value: ResponseCookie;
   };
 }
 

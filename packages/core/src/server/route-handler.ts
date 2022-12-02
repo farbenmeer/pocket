@@ -1,13 +1,15 @@
-import { Html } from "./html";
-import { PocketRequest } from "./pocket-request";
-import { PocketResponse } from "./pocket-response";
-import { notFound } from "./response-helpers";
-import { RouteDefinition } from "./route-handler-common";
+import * as EdgeRuntimeCookies from "@edge-runtime/cookies";
+import { Html } from "../html";
+import { PocketRequest } from "../pocket-request";
+import { PocketResponse } from "../pocket-response";
+import { notFound } from "../response-helpers";
+import { RouteDefinition } from "../route-handler-common";
+import { getRequestCookies, setResponseCookies } from "./cookies";
 
 export async function setupRouteHandler(routes: RouteDefinition[]) {
   addEventListener("fetch", async (evt_: Event) => {
     const evt = evt_ as FetchEvent;
-    const req = new PocketRequest(evt.request);
+    const req = new PocketRequest(evt.request, getRequestCookies(evt.request));
     const url = new URL(req.url);
 
     for (const { path, methods, layouts } of routes) {
@@ -47,6 +49,8 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
       if (!(res instanceof Response)) {
         res = new PocketResponse(res);
       }
+
+      setResponseCookies(res);
 
       res.headers.set("Server", "Pocket Server");
       console.log("retrrn", res.headers);

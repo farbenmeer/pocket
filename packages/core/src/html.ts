@@ -84,5 +84,10 @@ export class Html {
 }
 
 export const pocketScript = html`
-  <script defer src="/_pocket/runtime.js"></script>
+  <script
+    defer
+    src="/_pocket/runtime.js"
+    id="pocket-runtime"
+    data-env="${process.env.POCKET_IS_WORKER ? "worker" : "server"}"
+  ></script>
 `;

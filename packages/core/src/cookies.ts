@@ -1,50 +1,15 @@
-import * as EdgeRuntimeCookies from "@edge-runtime/cookies";
-import { db } from "./db";
-import { ClientPostMessage, WorkerPostMessage } from "./post-message";
-
-export interface RequestCookies extends EdgeRuntimeCookies.RequestCookies {}
-export interface ResponseCookies extends EdgeRuntimeCookies.ResponseCookies {}
-export type RequestCookie = EdgeRuntimeCookies.RequestCookie;
-export type ResponseCookie = EdgeRuntimeCookies.ResponseCookie;
-
-if (process.env.POCKET_IS_WORKER) {
-  addEventListener("message", async (evt: MessageEvent<WorkerPostMessage>) => {
-    console.log("worker got message", evt.data);
-    switch (evt.data.type) {
-      case "send-cookies":
-        await (await db).put("cookies", evt.data.cookie, evt.data.path);
-    }
-  });
+export interface RequestCookie {
+  name: string;
+  value: string;
 }
 
-async function getClient(clientId: string): Promise<Client | undefined> {
-  const clients = (self as any).clients as Clients;
-
-  return clients.get(clientId);
-
-  const allClients = await clients.matchAll({ type: "window" });
-
-  return allClients[0];
-}
-
-export async function getCookies(url: URL): Promise<string> {
-  return (await (await db).get("cookies", url.pathname)) ?? "";
-}
-
-export async function setCookies(clientId: string, url: URL, cookie: string) {
-  console.log("set cookies", cookie);
-  await (await db).put("cookies", cookie, url.pathname);
-
-  const client = await getClient(clientId);
-  if (client) {
-    console.log("got client", client);
-  }
-  const message: ClientPostMessage = {
-    type: "set-cookie",
-    cookie,
-  };
-  client?.postMessage(message);
-  console.log("set cookie done");
+export interface ResponseCookie {
+  name: string;
+  value: string;
+  maxAge?: number;
+  secure?: boolean;
+  sameSite?: "none" | "lax" | "strict" | true | false;
+  expires?: Date;
 }
 
 export function parseCookie(cookie?: string | null): RequestCookie[] {
@@ -53,7 +18,7 @@ export function parseCookie(cookie?: string | null): RequestCookie[] {
       const equalSignIndex = cookie.indexOf("=");
       return {
         name: cookie.slice(0, equalSignIndex).trim(),
-        value: decodeURIComponent(cookie.slice(equalSignIndex).trim()),
+        value: decodeURIComponent(cookie.slice(equalSignIndex + 1).trim()),
       };
     }) ?? []
   );
@@ -62,11 +27,7 @@ export function parseCookie(cookie?: string | null): RequestCookie[] {
 export function serializeCookie(cookieOptions: ResponseCookie): string {
   let cookie = `${cookieOptions.name}=${encodeURIComponent(
     cookieOptions.value
-  )}`;
-
-  if (cookieOptions.path) {
-    cookie += `;Path=${cookieOptions.path}`;
-  }
+  )}; Path=/`;
 
   if (cookieOptions.expires) {
     cookie += `;Expires=${cookieOptions.expires.toUTCString()}`;
@@ -87,4 +48,117 @@ export function serializeCookie(cookieOptions: ResponseCookie): string {
   }
 
   return cookie;
+}
+
+export class RequestCookies {
+  private cookies: Map<string, RequestCookie>;
+  constructor(cookies: RequestCookie[]) {
+    this.cookies = new Map(cookies.map((cookie) => [cookie.name, cookie]));
+  }
+
+  get size() {
+    return this.cookies.size;
+  }
+
+  get(name: string) {
+    return this.cookies.get(name);
+  }
+
+  getAll(name?: string) {
+    if (name) {
+      const cookie = this.cookies.get(name);
+      if (cookie) {
+        return [cookie];
+      } else {
+        return [];
+      }
+    }
+
+    return Array.from(this.cookies.values());
+  }
+
+  has(name: string) {
+    return this.cookies.has(name);
+  }
+
+  set(name: string, value: string) {
+    this.cookies.set(name, { name, value });
+    return this;
+  }
+
+  delete(name: string): boolean;
+  delete(names: string[]): boolean[];
+  delete(nameOrNames: string | string[]): boolean | boolean[] {
+    if (Array.isArray(nameOrNames)) {
+      return nameOrNames.map((name) => this.cookies.delete(name));
+    }
+    return this.cookies.delete(nameOrNames);
+  }
+
+  clear() {
+    this.cookies.clear();
+    return this;
+  }
+
+  toString() {
+    return Array.from(this.cookies.values())
+      .map((cookie) => `${cookie.name}=${encodeURIComponent(cookie.value)}`)
+      .join(";");
+  }
+}
+
+export class ResponseCookies {
+  private cookies: ResponseCookie[];
+
+  constructor(headers: Headers) {
+    this.cookies = parseCookie(headers.get("Set-Cookie"));
+  }
+
+  get(name: string) {
+    return this.cookies.reverse().find((cookie) => cookie.name === name);
+  }
+
+  getAll(name?: string): ResponseCookie[] {
+    if (name) {
+      const cookie = this.get(name);
+      if (cookie) {
+        return [cookie];
+      } else {
+        return [];
+      }
+    }
+
+    const cookieMap = new Map();
+    for (const cookie of this.cookies) {
+      cookieMap.set(cookie.name, cookie);
+    }
+    return Array.from(cookieMap.values());
+  }
+
+  set(
+    nameOrOptions: string | ResponseCookie,
+    value?: string,
+    options?: Omit<ResponseCookie, "name" | "value">
+  ) {
+    if (typeof nameOrOptions === "object") {
+      this.cookies.push(nameOrOptions);
+      return this;
+    }
+
+    this.cookies.push({ ...options, name: nameOrOptions, value: value! });
+    return this;
+  }
+
+  delete(name: string) {
+    this.cookies.push({
+      name,
+      value: "",
+      maxAge: 0,
+    });
+    return this;
+  }
+
+  toString() {
+    return this.getAll().map(serializeCookie).join(",");
+  }
 }

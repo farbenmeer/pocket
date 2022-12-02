@@ -1,13 +1,18 @@
 import { getCookies, setCookies } from "./cookies";
-import { Html } from "./html";
-import { PocketRequest } from "./pocket-request";
-import { PocketResponse } from "./pocket-response";
-import { notFound } from "./response-helpers";
-import { RouteDefinition } from "./route-handler-common";
+import { RequestCookies } from "../cookies";
+import { Html } from "../html";
+import { PocketRequest } from "../pocket-request";
+import { PocketResponse } from "../pocket-response";
+import { notFound } from "../response-helpers";
+import { RouteDefinition } from "../route-handler-common";
 
 export async function setupRouteHandler(routes: RouteDefinition[]) {
   async function handleEvent(evt: FetchEvent) {
     const url = new URL(evt.request.url);
+
+    if (url.hostname !== location.hostname) {
+      return fetch(evt.request);
+    }
 
     for (const { path, methods, layouts } of routes) {
       if (url.pathname !== path) {
@@ -23,9 +28,12 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
       }
 
       console.log("getcookies");
-      const requestCookie = await getCookies(url);
+      const requestCookies = await getCookies();
 
-      const req = new PocketRequest(evt.request, requestCookie);
+      const req = new PocketRequest(
+        evt.request,
+        new RequestCookies(requestCookies)
+      );
 
       let res;
       if (methods.page) {
@@ -55,10 +63,10 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
       res.headers.set("Server", "Pocket Worker");
 
       const responseCookie =
-        res instanceof PocketResponse ? res.cookies.toString() : null;
+        res instanceof PocketResponse ? res.cookies.getAll() : null;
       console.log("response cookie", responseCookie);
       if (responseCookie) {
-        evt.waitUntil(setCookies(evt.resultingClientId, url, responseCookie));
+        evt.waitUntil(setCookies(evt.resultingClientId, responseCookie));
       }
 
       console.log("retrrn", res.headers, evt);

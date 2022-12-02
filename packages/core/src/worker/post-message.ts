@@ -4,6 +4,10 @@ export type ClientPostMessage =
       cookie: string;
     }
   | {
+      type: "set-cookies";
+      cookies: string[];
+    }
+  | {
       type: "get-cookies";
       requestId: number;
     };
