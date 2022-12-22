@@ -36,5 +36,9 @@ export type RouteDefinition = {
   } & {
     readonly page?: PocketPage<unknown>;
   };
-  readonly layouts: { path: string; layout: PocketLayout }[];
+  readonly layouts: {
+    path: string;
+    layout: PocketLayout;
+    pathDigest: string;
+  }[];
 };

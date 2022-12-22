@@ -19,15 +19,12 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
         continue;
       }
 
-      console.log("route", { path, pathname: url.pathname });
-
       const method = methods[evt.request.method.toLowerCase()];
-      if (!method) {
-        console.log("method", method, "notFound");
+
+      if (!method && !methods.page) {
         return notFound({ headers: { Server: "Pocket Worker" } });
       }
 
-      console.log("getcookies");
       const requestCookies = await getCookies();
 
       const req = new PocketRequest(
@@ -37,23 +34,58 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
 
       let res;
       if (methods.page) {
+        const root = req.headers.get("X-Pocket-Root");
+
+        const activeLayouts = root
+          ? layouts.filter((layout) => !root.startsWith(layout.path))
+          : layouts;
+
         function render(props: unknown): Html {
           let html = Html.from(methods.page!({ req, props }));
 
-          for (const { layout } of layouts.reverse()) {
+          for (const { layout, pathDigest } of activeLayouts) {
             if (!layout) {
               continue;
             }
 
-            html = Html.from(layout({ req, children: html }));
+            html = Html.from(
+              layout({
+                req,
+                children: new Html(
+                  [
+                    `<div style="display:none;" id="_pocket-b${pathDigest}"></div>`,
+                    `<div style="display:none;" id="_pocket-a${pathDigest}"></div>`,
+                  ],
+                  [html]
+                ),
+              })
+            );
           }
 
           return html;
         }
 
-        res = await method({ req, render: render as any });
-      } else {
+        const targetLayout = layouts.find((layout) =>
+          root?.startsWith(layout.path)
+        );
+
+        if (method) {
+          res = await method({ req, render: render as any });
+        } else {
+          res = new PocketResponse(render(undefined));
+        }
+
+        if (!(res instanceof Response)) {
+          res = new PocketResponse(res);
+        }
+
+        if (targetLayout) {
+          res.headers.set("X-Pocket-Target", targetLayout?.pathDigest);
+        }
+      } else if (method) {
         res = await method({ req } as any);
+      } else {
+        return notFound({ headers: { Server: "Pocket Worker" } });
       }
 
       if (!(res instanceof Response)) {

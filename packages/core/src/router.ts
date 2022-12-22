@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { md5 } from "./md5";
 
 export default function generateRouter(options: {
   environment: "server" | "worker";
@@ -63,11 +64,12 @@ export default function generateRouter(options: {
             layouts: [
               ${layouts
                 .filter((layout) => route.startsWith(layout))
+                .reverse()
                 .map(
                   (layout) =>
                     `{ path: "${layout}", layout: ${layoutName(
                       layout
-                    )}.layout }`
+                    )}.layout, pathDigest: "${md5(layout).slice(-6)}" }`
                 )
                 .join(",")}
             ]

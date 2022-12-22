@@ -1,5 +1,5 @@
 import { html } from "pocket";
-import { table } from "components/table";
+import { table } from "./table";
 
 // handles /contact
 export function page() {
