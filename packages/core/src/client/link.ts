@@ -1,7 +1,9 @@
+import { syncCookies } from "./cookies";
+
 export function registerLinks() {
-  document.querySelectorAll("a[root]").forEach((anchor) => {
+  document.querySelectorAll("a[soft]").forEach((anchor) => {
     anchor.addEventListener("click", async (evt) => {
-      if (!anchor.hasAttribute("root")) {
+      if (!anchor.hasAttribute("soft")) {
         return;
       }
 
@@ -19,7 +21,7 @@ export function registerLinks() {
 
       const commonAncestors = getCommonAncestors(
         targetUrl,
-        anchor.getAttribute("root")!
+        anchor.getAttribute("root") ?? ""
       );
 
       const response = await fetch(href, {
@@ -27,6 +29,9 @@ export function registerLinks() {
           "X-Pocket-Root": "/" + commonAncestors.join("/"),
         },
       });
+      if (!process.env.POCKET_DISABLE_WORKER) {
+        await syncCookies();
+      }
 
       window.history.pushState(null, "", targetUrl);
 

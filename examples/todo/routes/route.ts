@@ -54,7 +54,7 @@ export async function get({ req, render }: PocketRouteContext<Props>) {
   if (todo) {
     todo.done = Boolean(check);
     const res = new PocketResponse(render({ todos }));
-    res.cookies.set("pocket-todos", JSON.stringify(todos));
+    res.cookies.set("pocket-todos", JSON.stringify(todos), { path: "/" });
     return res;
   }
 
@@ -80,7 +80,7 @@ export async function post({ req, render }: PocketRouteContext<Props>) {
 
   const res = new PocketResponse(render({ todos }));
 
-  res.cookies.set("pocket-todos", JSON.stringify(todos));
+  res.cookies.set("pocket-todos", JSON.stringify(todos), { path: "/" });
 
   return res;
 }

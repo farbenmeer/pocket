@@ -1,44 +1,28 @@
-import { parseCookie, ResponseCookie, serializeCookie } from "../cookies";
-import { db } from "./db";
-import { ClientPostMessage, WorkerPostMessage } from "./post-message";
-
-addEventListener("message", async (evt: MessageEvent<WorkerPostMessage>) => {
-  console.log("worker got message", evt.data);
-  switch (evt.data.type) {
-    case "send-cookies":
-      const cookies = parseCookie(evt.data.cookie);
-      const tx = (await db).transaction("cookies", "readwrite");
-      await Promise.all(
-        cookies.map((cookie) => tx.store.put(cookie, cookie.name))
-      );
-      tx.commit();
-  }
-});
-
-async function getClient(clientId: string): Promise<Client | undefined> {
-  const clients = (self as any).clients as Clients;
-
-  return clients.get(clientId);
-}
+import { ResponseCookie } from "../cookies";
+import { openDB } from "../db";
 
 export async function getCookies(): Promise<ResponseCookie[]> {
-  return (await db).getAll("cookies");
+  const db = await openDB();
+  const cookies = await db.getAll("cookies");
+  return cookies.filter((cookie) => !cookie.name.startsWith("_pocket"));
 }
 
-export async function setCookies(clientId: string, cookies: ResponseCookie[]) {
-  console.log("set cookies", cookies);
-  const tx = (await db).transaction("cookies", "readwrite");
-  await Promise.all(cookies.map((cookie) => tx.store.put(cookie, cookie.name)));
-  tx.commit();
-
-  const client = await getClient(clientId);
-  if (client) {
-    console.log("got client", client);
+export async function setCookies(cookies: ResponseCookie[]) {
+  console.log("set", cookies);
+  if (cookies.length === 0) {
+    return;
   }
-  const message: ClientPostMessage = {
-    type: "set-cookies",
-    cookies: cookies.map(serializeCookie),
-  };
-  client?.postMessage(message);
-  console.log("set cookie done");
+  const db = await openDB();
+  console.log("set cookies", cookies);
+  const tx = db.transaction("cookies", "readwrite");
+  for (const cookie of cookies) {
+    await tx.store.put(cookie);
+  }
+  await tx.store.put({
+    name: "_pocket_ts",
+    value: Math.floor(Date.now() / 1000).toString(),
+    path: "/",
+    maxAge: 34560000,
+  });
+  tx.commit();
 }

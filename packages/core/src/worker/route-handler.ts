@@ -98,7 +98,7 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
         res instanceof PocketResponse ? res.cookies.getAll() : null;
       console.log("response cookie", responseCookie);
       if (responseCookie) {
-        evt.waitUntil(setCookies(evt.resultingClientId, responseCookie));
+        evt.waitUntil(setCookies(responseCookie));
       }
 
       console.log("retrrn", res.headers, evt);

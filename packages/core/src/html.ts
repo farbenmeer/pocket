@@ -12,17 +12,15 @@ html.raw = function raw(content: string) {
 };
 
 export class Html {
-  private textEncoder = new TextEncoder();
-
   constructor(
     private strings: string[] | TemplateStringsArray,
     private args: Arg[]
   ) {}
 
-  renderToStream(): ReadableStream {
+  renderToStream(): ReadableStream<Uint8Array> {
     const strings = this.strings;
     const args = this.args;
-    const textEncoder = this.textEncoder;
+    const textEncoder = new TextEncoder();
 
     return new ReadableStream({
       async start(controller) {
@@ -73,6 +71,23 @@ export class Html {
         controller.close();
       },
     });
+  }
+
+  async renderToString() {
+    const stream = this.renderToStream();
+    const decoder = new TextDecoder();
+    const reader = stream.getReader();
+
+    const out: string[] = [];
+    while (true) {
+      const { done, value } = await reader.read();
+
+      if (done) {
+        return out.join("");
+      }
+
+      out.push(decoder.decode(value));
+    }
   }
 
   static from(arg: Arg): Html {

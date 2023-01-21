@@ -1,5 +1,5 @@
-import { registerLinks } from "../link";
-import { ClientPostMessage, WorkerPostMessage } from "../worker/post-message";
+import { registerLinks } from "./link";
+import { syncCookies } from "./cookies";
 
 (async () => {
   if (process.env.NODE_ENV === "development") {
@@ -20,31 +20,11 @@ import { ClientPostMessage, WorkerPostMessage } from "../worker/post-message";
       registration.unregister();
     }
   } else if (window.navigator.serviceWorker) {
-    window.navigator.serviceWorker.addEventListener(
-      "message",
-      async (event: MessageEvent<ClientPostMessage>) => {
-        console.log("runtime got", event.data);
-        switch (event.data.type) {
-          case "set-cookie": {
-            const { cookie } = event.data;
-            window.document.cookie = cookie;
-            return;
-          }
-          case "set-cookies":
-            const { cookies } = event.data;
-            for (const cookie of cookies) {
-              window.document.cookie = cookie;
-            }
-        }
-      }
-    );
+    await syncCookies();
 
-    const registration = await window.navigator.serviceWorker.register(
-      "/_pocket-worker.js",
-      {
-        scope: "/",
-      }
-    );
+    await window.navigator.serviceWorker.register("/_pocket-worker.js", {
+      scope: "/",
+    });
 
     const environment =
       document.head
@@ -54,16 +34,6 @@ import { ClientPostMessage, WorkerPostMessage } from "../worker/post-message";
         : "worker";
 
     console.log("env is", environment);
-
-    if (environment === "server") {
-      const message: WorkerPostMessage = {
-        type: "send-cookies",
-        cookie: window.document.cookie,
-        path: window.location.pathname,
-      };
-      registration.installing?.postMessage(message);
-      registration.active?.postMessage(message);
-    }
   }
 
   registerLinks();

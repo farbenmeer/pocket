@@ -6,6 +6,8 @@ export interface RequestCookie {
 export interface ResponseCookie {
   name: string;
   value: string;
+  path: "/";
+  httpOnly?: boolean;
   maxAge?: number;
   secure?: boolean;
   sameSite?: "none" | "lax" | "strict" | true | false;
@@ -27,7 +29,11 @@ export function parseCookie(cookie?: string | null): RequestCookie[] {
 export function serializeCookie(cookieOptions: ResponseCookie): string {
   let cookie = `${cookieOptions.name}=${encodeURIComponent(
     cookieOptions.value
-  )}; Path=/`;
+  )}`;
+
+  if (cookieOptions.path) {
+    cookie += `;Path=${cookieOptions.path}`;
+  }
 
   if (cookieOptions.expires) {
     cookie += `;Expires=${cookieOptions.expires.toUTCString()}`;
@@ -41,10 +47,16 @@ export function serializeCookie(cookieOptions: ResponseCookie): string {
     cookie += `;SameSite=${
       cookieOptions.sameSite === true ? "Strict" : cookieOptions.sameSite
     }`;
+  } else {
+    cookie += `;SameSite=Lax`;
   }
 
   if (cookieOptions.secure) {
     cookie += ";Secure";
+  }
+
+  if (cookieOptions.httpOnly) {
+    cookie += `;HttpOnly`;
   }
 
   return cookie;
@@ -111,7 +123,10 @@ export class ResponseCookies {
   private cookies: ResponseCookie[];
 
   constructor(headers: Headers) {
-    this.cookies = parseCookie(headers.get("Set-Cookie"));
+    this.cookies = parseCookie(headers.get("Set-Cookie")).map((cookie) => ({
+      path: "/",
+      ...cookie,
+    }));
   }
 
   get(name: string) {
@@ -135,6 +150,12 @@ export class ResponseCookies {
     return Array.from(cookieMap.values());
   }
 
+  set(cookie: ResponseCookie): this;
+  set(
+    name: string,
+    value: string,
+    options: Omit<ResponseCookie, "name" | "value">
+  ): this;
   set(
     nameOrOptions: string | ResponseCookie,
     value?: string,
@@ -145,15 +166,20 @@ export class ResponseCookies {
       return this;
     }
 
-    this.cookies.push({ ...options, name: nameOrOptions, value: value! });
+    this.cookies.push({
+      ...options,
+      name: nameOrOptions,
+      value: value!,
+    } as ResponseCookie);
     return this;
   }
 
-  delete(name: string) {
+  delete(name: string, options: { path: "/" }) {
     this.cookies.push({
       name,
       value: "",
       maxAge: 0,
+      ...options,
     });
     return this;
   }
