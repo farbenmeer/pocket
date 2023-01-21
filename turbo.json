@@ -15,6 +15,10 @@
       "outputs": [".pocket/**", "dist/**"],
       "dependsOn": ["build"]
     },
-    "test": { "outputs": [] }
+    "test": { "outputs": [] },
+    "clean": {
+      "cache": false,
+      "outputs": []
+    }
   }
 }

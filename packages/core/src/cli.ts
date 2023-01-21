@@ -2,6 +2,7 @@
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { build } from "./build";
+import { clean } from "./clean";
 import { startDevServer } from "./dev";
 import { startServer } from "./server";
 
@@ -32,6 +33,14 @@ yargs(hideBin(process.argv))
     },
     (flags) => {
       startDevServer({ disableWorker: flags["disable-worker"] });
+    }
+  )
+  .command(
+    "clean",
+    "clean up build files",
+    () => {},
+    () => {
+      clean();
     }
   )
   .demandCommand(1)

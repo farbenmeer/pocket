@@ -42,7 +42,7 @@ export function webpackConfig(options: {
     ...baseConfig,
     entry: {
       "_pocket-worker": "val-loader?environment=worker!pocket/dist/router.js",
-      "_pocket/runtime": "pocket/dist/runtime.js",
+      "_pocket/runtime": "pocket/dist/client/runtime.js",
     },
     output: {
       path: path.resolve(process.cwd(), ".pocket/static"),

@@ -1,5 +1,5 @@
-import { registerLinks } from "./link";
-import { ClientPostMessage, WorkerPostMessage } from "./worker/post-message";
+import { registerLinks } from "../link";
+import { ClientPostMessage, WorkerPostMessage } from "../worker/post-message";
 
 (async () => {
   if (process.env.NODE_ENV === "development") {

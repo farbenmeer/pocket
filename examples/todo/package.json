@@ -6,7 +6,8 @@
   "scripts": {
     "build": "pocket build",
     "start": "pocket start",
-    "dev": "pocket dev"
+    "dev": "pocket dev",
+    "clean": "rm -rf .pocket"
   },
   "dependencies": {
     "cookie": "^0.5.0",

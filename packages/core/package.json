@@ -11,7 +11,8 @@
   "scripts": {
     "build": "tsc --module commonjs",
     "dev": "tsc --module commonjs --watch",
-    "test": "jest"
+    "test": "jest",
+    "clean": "rm -rf dist"
   },
   "dependencies": {
     "@edge-runtime/cookies": "^3.0.2",
