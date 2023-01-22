@@ -6,7 +6,7 @@ import {
   PocketRouteContext,
 } from "pocket";
 
-type Todo = {
+export type Todo = {
   id: string;
   title: string;
   done: boolean;
@@ -26,9 +26,17 @@ export function page({ props }: PocketPageContext<Props>) {
     </form>
     <ul>
       ${props.todos.map((todo) => {
-        const onchange = `location.replace('?${
-          todo.done ? "uncheck" : "check"
-        }=${todo.id}')`;
+        const onchange = `fetch('/todo', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: '{\
+            \\"id\\": \\"${todo.id}\\",\
+            \\"title\\": \\"${todo.title}\\",\
+            \\"done\\": ${todo.done ? "false" : "true"}\
+          }'
+        })`;
 
         return html`<li>
           <input

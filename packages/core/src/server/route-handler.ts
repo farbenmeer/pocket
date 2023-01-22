@@ -12,6 +12,7 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
     const url = new URL(req.url);
 
     for (const { path, methods, layouts } of routes) {
+      console.debug("match", path, url.pathname);
       if (url.pathname !== path) {
         continue;
       }

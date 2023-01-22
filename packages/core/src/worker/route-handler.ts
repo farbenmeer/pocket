@@ -5,8 +5,12 @@ import { PocketRequest } from "../pocket-request";
 import { PocketResponse } from "../pocket-response";
 import { notFound } from "../response-helpers";
 import { RouteDefinition } from "../route-handler-common";
+import { ClientPostMessage } from "../client/post-message";
+
+declare var clients: Clients;
 
 export async function setupRouteHandler(routes: RouteDefinition[]) {
+  console.log(routes);
   async function handleEvent(evt: FetchEvent) {
     const url = new URL(evt.request.url);
 
@@ -15,6 +19,7 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
     }
 
     for (const { path, methods, layouts } of routes) {
+      console.log("match", path, url.pathname);
       if (url.pathname !== path) {
         continue;
       }
@@ -98,7 +103,17 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
         res instanceof PocketResponse ? res.cookies.getAll() : null;
       console.log("response cookie", responseCookie);
       if (responseCookie) {
-        evt.waitUntil(setCookies(responseCookie));
+        evt.waitUntil(
+          (async () => {
+            await setCookies(responseCookie);
+            const client = await clients.get(evt.clientId);
+            console.log({ client });
+            const message: ClientPostMessage = {
+              type: "sync-cookies",
+            };
+            client?.postMessage(message);
+          })()
+        );
       }
 
       console.log("retrrn", res.headers, evt);

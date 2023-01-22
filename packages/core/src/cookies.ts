@@ -122,11 +122,15 @@ export class RequestCookies {
 export class ResponseCookies {
   private cookies: ResponseCookie[];
 
-  constructor(headers: Headers) {
+  constructor(headers: Headers, cookies?: ResponseCookie[]) {
     this.cookies = parseCookie(headers.get("Set-Cookie")).map((cookie) => ({
       path: "/",
       ...cookie,
     }));
+
+    if (cookies) {
+      this.cookies.push(...cookies);
+    }
   }
 
   get(name: string) {
