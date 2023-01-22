@@ -55,17 +55,6 @@ export async function get({ req, render }: PocketRouteContext<Props>) {
   const rawTodos = req.cookies.get("pocket-todos")?.value;
   const todos: Todo[] = rawTodos ? JSON.parse(rawTodos) : [];
 
-  const url = new URL(req.url);
-  const check = url.searchParams.get("check");
-  const uncheck = url.searchParams.get("uncheck");
-  const todo = todos.find((todo) => todo.id === check || todo.id === uncheck);
-  if (todo) {
-    todo.done = Boolean(check);
-    const res = new PocketResponse(render({ todos }));
-    res.cookies.set("pocket-todos", JSON.stringify(todos), { path: "/" });
-    return res;
-  }
-
   return render({ todos });
 }
 
