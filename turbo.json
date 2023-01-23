@@ -5,6 +5,10 @@
       "outputs": ["dist/**", ".pocket/**"],
       "dependsOn": ["^build"]
     },
+    "build:vercel": {
+      "outputs": ["dist/**", ".vercel/**"],
+      "dependsOn": ["^build"]
+    },
     "start": {
       "cache": false,
       "outputs": [],

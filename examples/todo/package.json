@@ -5,6 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build": "pocket build",
+    "build:vercel": "pocket build --output vercel",
     "start": "pocket start",
     "dev": "pocket dev",
     "clean": "rm -rf .pocket"
