@@ -9,6 +9,7 @@ export async function handleRoute(
   { methods, layouts }: RouteDefinition,
   originalRequest: Request
 ) {
+  console.log("handle request", originalRequest.url);
   return new Response("Hello World");
   //const req = new PocketRequest(
   //  originalRequest,
