@@ -5,10 +5,10 @@
   "license": "MIT",
   "scripts": {
     "build": "pocket build",
-    "build:vercel": "pocket build --output vercel",
+    "build:vercel": "node ../../packages/core/dist/cli.js build --output vercel",
     "start": "pocket start",
     "dev": "pocket dev",
-    "clean": "rm -rf .pocket"
+    "clean": "rm -rf .pocket .vercel"
   },
   "dependencies": {
     "cookie": "^0.5.0",
