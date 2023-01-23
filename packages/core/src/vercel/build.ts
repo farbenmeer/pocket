@@ -3,6 +3,7 @@ import path from "path";
 import { Configuration, DefinePlugin, webpack } from "webpack";
 import { buildManifest } from "../manifest";
 import * as fs from "fs";
+import { buildConfig } from "./config";
 
 export default async function buildForVercel() {
   console.log("buildForVercel");
@@ -66,6 +67,8 @@ export default async function buildForVercel() {
       })
     );
   }
+
+  buildConfig();
 }
 
 const baseConfig: Configuration = {
