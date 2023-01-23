@@ -60,7 +60,7 @@ export default async function buildForVercel() {
     fs.writeFileSync(
       `${process.cwd()}/.vercel/output/functions/${
         route.slice(1) || "index"
-      }.func/vc-config.json`,
+      }.func/.vc-config.json`,
       JSON.stringify({
         runtime: "edge",
         entrypoint: "index.js",
