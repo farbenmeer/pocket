@@ -24,7 +24,7 @@ export default function generateEdgeLambdaCode(options: { target: string }) {
       export default function handler(req) {
         return new Response("Hello World")
       }
-    `
+    `,
     //code: `
     //        import { handleRoute } from "pocket/dist/vercel/route-handler";
     //        import * as route from "${path.resolve(
