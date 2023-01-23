@@ -19,9 +19,15 @@ export default async function buildForVercel() {
         )}!pocket/dist/vercel/edge-lambda.js`,
       ])
     ),
+    experiments: {
+      outputModule: true,
+    },
     output: {
       path: path.resolve(process.cwd(), ".vercel/output/functions"),
       filename: "[name].js",
+      library: {
+        type: "module",
+      },
     },
     devtool: "source-map",
     plugins: [
