@@ -1176,6 +1176,11 @@
   dependencies:
     "@types/yargs-parser" "*"
 
+"@vercel/edge@^0.2.6":
+  version "0.2.6"
+  resolved "https://registry.yarnpkg.com/@vercel/edge/-/edge-0.2.6.tgz#07d717111cc000f8df7cd8ffe35fc6e22b5bef7c"
+  integrity sha512-sOdonGth4lgijrWItbBCNoc1Abx/Vxfx0rnFww1b5zKvhs/DxyqUX1ebCkoAEzQ5/oNY/rIHX6kUWjIZYWmlcg==
+
 "@webassemblyjs/ast@1.11.1":
   version "1.11.1"
   resolved "https://registry.yarnpkg.com/@webassemblyjs/ast/-/ast-1.11.1.tgz#2bfd767eae1a6996f432ff7e8d7fc75679c0b6a7"
@@ -2032,6 +2037,11 @@ core-util-is@~1.0.0:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.3.tgz#a6042d3634c2b27e9328f837b965fac83808db85"
   integrity sha512-ZQBvi1DcpJ4GDqanjucZ2Hj3wEO5pZDS89BWbkcrvdxksJorwUDDZamX9ldFkp9aw2lmBDLgkObEA4DWNJ9FYQ==
+
+create-file-webpack-plugin@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/create-file-webpack-plugin/-/create-file-webpack-plugin-1.0.1.tgz#873dcc5d7d90d1bae49786006ea39eeb55e4772b"
+  integrity sha512-yc5+Ybg/xpnij9qMTUYNmqaDf4NLTxA9bczp85TBRZLOxpFuuMYZR95zAdxqz0ku1wwzofm+x1VM1uz06eQgxg==
 
 cross-spawn@^7.0.3:
   version "7.0.3"

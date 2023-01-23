@@ -5,14 +5,29 @@ import { build } from "./build";
 import { clean } from "./clean";
 import { startDevServer } from "./dev";
 import { startServer } from "./server";
+import buildForVercel from "./vercel/build";
 
+console.log("cli");
 yargs(hideBin(process.argv))
   .command(
     "build",
     "emit a production build",
-    () => {},
-    () => {
-      build();
+    (yargs) =>
+      yargs.option("output", {
+        choices: ["standalone", "vercel"],
+        describe: "define output format",
+        default: "standalone",
+      }),
+    async (argv) => {
+      console.log("build", argv);
+      switch (argv.output) {
+        case "standalone":
+          await build();
+          return;
+        case "vercel":
+          await buildForVercel();
+          return;
+      }
     }
   )
   .command(

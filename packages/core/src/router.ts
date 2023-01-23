@@ -1,44 +1,15 @@
 import * as fs from "fs";
 import * as path from "path";
+import { buildManifest } from "./manifest";
 import { md5 } from "./md5";
 
 export default function generateRouter(options: {
   environment: "server" | "worker";
 }) {
+  const manifest = buildManifest();
   const basePath = path.resolve(process.cwd(), "routes");
-  const routes: string[] = [];
-  const layouts: string[] = [];
 
-  function parseDirectory(dir: string) {
-    const entries = fs.readdirSync(path.resolve(basePath, dir));
-    console.log("parse", dir, entries);
-
-    for (const entry of entries) {
-      console.log("entry", entry);
-      if (entry === "route.ts") {
-        routes.push(dir === "." ? "/" : dir.slice(1));
-        continue;
-      }
-
-      if (entry === "layout.ts") {
-        layouts.push(dir === "." ? "/" : dir.slice(1));
-        continue;
-      }
-
-      console.log(
-        entry,
-        "isDirectory",
-        fs.statSync(path.resolve(basePath, dir, entry)).isDirectory()
-      );
-      if (fs.statSync(path.resolve(basePath, dir, entry)).isDirectory()) {
-        parseDirectory(dir + "/" + entry);
-      }
-    }
-  }
-
-  parseDirectory(".");
-
-  const routeImports = routes.map(
+  const routeImports = manifest.routes.map(
     (route) => `
     import * as ${handlerName(route)} from "${path.resolve(
       basePath,
@@ -46,7 +17,7 @@ export default function generateRouter(options: {
       "route.ts"
     )}";`
   );
-  const layoutImports = layouts.map(
+  const layoutImports = manifest.layouts.map(
     (layout) => `
     import * as ${layoutName(layout)} from "${path.resolve(
       basePath,
@@ -65,12 +36,12 @@ export default function generateRouter(options: {
       ${layoutImports.join("\n")}
 
       setupRouteHandler([
-        ${routes.map(
+        ${manifest.routes.map(
           (route) => `{
             path: ${JSON.stringify(route)},
             methods: ${handlerName(route)},
             layouts: [
-              ${layouts
+              ${manifest.layouts
                 .filter((layout) => route.startsWith(layout))
                 .reverse()
                 .map(
@@ -85,10 +56,10 @@ export default function generateRouter(options: {
         )}
       ])
     `,
-    dependencies: routes
+    dependencies: manifest.routes
       .map((route) => path.resolve(basePath, route.slice(1), "route.ts"))
       .concat(
-        layouts.map((layout) =>
+        manifest.layouts.map((layout) =>
           path.resolve(basePath, layout.slice(1), "layout.ts")
         )
       ),
