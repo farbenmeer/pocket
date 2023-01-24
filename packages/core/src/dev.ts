@@ -1,19 +1,24 @@
-import { createHandler, EdgeRuntime } from "edge-runtime";
+import { createHandler } from "edge-runtime";
 import * as http from "http";
 import nodeStatic from "node-static";
 import * as path from "path";
 import { webpack } from "webpack";
 import { getServerRuntime } from "./server.js";
-import { webpackConfig } from "./webpack.config.js";
+import { serverConfig, workerConfig } from "./webpack.config.js";
 
 export function startDevServer(options?: { disableWorker?: boolean }) {
   console.log("startDevServer");
-  const compiler = webpack(
-    webpackConfig({
+  const compiler = webpack([
+    workerConfig({
       mode: "development",
-      disableWorker: options?.disableWorker,
-    })
-  );
+      disableWorker: options?.disableWorker ?? false,
+      context: path.resolve(process.cwd(), ".pocket"),
+    }),
+    serverConfig({
+      mode: "development",
+      disableWorker: options?.disableWorker ?? false,
+    }),
+  ]);
 
   const sharedState: SharedState = {
     dynamicHandler: null,

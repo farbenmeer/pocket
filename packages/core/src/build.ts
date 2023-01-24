@@ -1,14 +1,22 @@
 import webpack from "webpack";
-import { webpackConfig } from "./webpack.config.js";
+import { serverConfig, workerConfig } from "./webpack.config.js";
+import * as path from "path";
 
 export async function build(options: { disableWorker: boolean }) {
   console.log("build it");
   await new Promise((resolve, reject) => {
     webpack(
-      webpackConfig({
-        mode: "production",
-        disableWorker: options.disableWorker,
-      }),
+      [
+        workerConfig({
+          mode: "production",
+          disableWorker: options.disableWorker,
+          context: path.resolve(process.cwd(), ".pocket"),
+        }),
+        serverConfig({
+          mode: "production",
+          disableWorker: options.disableWorker,
+        }),
+      ],
       (error, stats) => {
         console.log("webpack is done");
         if (error) {

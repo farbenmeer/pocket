@@ -1,0 +1,19 @@
+{
+  "name": "pocket-website",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "pocket build",
+    "build:vercel": "node ../../packages/core/dist/cli.js build --output vercel",
+    "start": "pocket start",
+    "dev": "pocket dev",
+    "clean": "rm -rf .pocket .vercel"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.4.13",
+    "pocket": "*",
+    "tailwindcss": "^3.2.4"
+  },
+  "devDependencies": {}
+}
