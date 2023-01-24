@@ -13,19 +13,25 @@ yargs(hideBin(process.argv))
     "build",
     "emit a production build",
     (yargs) =>
-      yargs.option("output", {
-        choices: ["standalone", "vercel"],
-        describe: "define output format",
-        default: "standalone",
-      }),
+      yargs
+        .option("output", {
+          choices: ["standalone", "vercel"],
+          describe: "define output format",
+          default: "standalone",
+        })
+        .option("disable-worker", {
+          boolean: true,
+          describe: "disable service worker",
+          default: false,
+        }),
     async (argv) => {
       console.log("build", argv);
       switch (argv.output) {
         case "standalone":
-          await build();
+          await build({ disableWorker: argv["disable-worker"] });
           return;
         case "vercel":
-          await buildForVercel();
+          await buildForVercel({ disableWorker: argv["disable-worker"] });
           return;
       }
     }
@@ -46,8 +52,8 @@ yargs(hideBin(process.argv))
         .boolean("disable-worker")
         .describe("disable-worker", "disable service worker");
     },
-    (flags) => {
-      startDevServer({ disableWorker: flags["disable-worker"] });
+    (argv) => {
+      startDevServer({ disableWorker: argv["disable-worker"] });
     }
   )
   .command(

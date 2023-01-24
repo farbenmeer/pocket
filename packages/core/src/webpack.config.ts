@@ -23,15 +23,6 @@ export function webpackConfig(options: {
       modules: [process.cwd(), "node_modules"],
     },
     plugins: [
-      new CopyPlugin({
-        patterns: [
-          {
-            from: path.resolve(process.cwd(), "public"),
-            to: "static",
-            noErrorOnMissing: true,
-          },
-        ],
-      }),
       new DefinePlugin({
         "process.env.POCKET_DISABLE_WORKER": options.disableWorker === true,
       }),
@@ -54,6 +45,16 @@ export function webpackConfig(options: {
       new DefinePlugin({
         "process.env.POCKET_IS_WORKER": true,
         "process.env.POCKET_IS_SERVER": false,
+        "process.env.POCKET_IS_EDGE": false,
+      }),
+      new CopyPlugin({
+        patterns: [
+          {
+            from: path.resolve(process.cwd(), "public"),
+            to: "static",
+            noErrorOnMissing: true,
+          },
+        ],
       }),
     ],
   };
@@ -71,6 +72,7 @@ export function webpackConfig(options: {
       new DefinePlugin({
         "process.env.POCKET_IS_WORKER": false,
         "process.env.POCKET_IS_SERVER": true,
+        "process.env.POCKET_IS_EDGE": false,
       }),
     ],
   };

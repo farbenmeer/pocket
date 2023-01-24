@@ -5,9 +5,59 @@ import { buildManifest } from "../manifest";
 import * as fs from "fs";
 import { buildConfig } from "./config";
 
-export default async function buildForVercel() {
+export default async function buildForVercel(options: {
+  disableWorker: boolean;
+}) {
   console.log("buildForVercel");
   const manifest = buildManifest();
+
+  const baseConfig: Configuration = {
+    mode: "production",
+    context: path.resolve(process.cwd(), ".vercel/output"),
+    module: {
+      rules: [
+        {
+          test: /\.(ts|tsx)$/i,
+          loader: "swc-loader",
+          exclude: ["/node_modules"],
+        },
+      ],
+    },
+    resolve: {
+      extensions: [".tsx", ".ts", ".jsx", ".js"],
+      modules: [process.cwd(), "node_modules"],
+    },
+  };
+
+  const clientConfig: Configuration = {
+    ...baseConfig,
+    entry: {
+      "_pocket-worker": "val-loader?environment=worker!pocket/dist/router.js",
+      "_pocket/runtime": "pocket/dist/client/runtime.js",
+    },
+    output: {
+      path: path.resolve(process.cwd(), ".vercel/output/static"),
+      filename: "[name].js",
+    },
+    devtool: "source-map",
+    plugins: [
+      new DefinePlugin({
+        "process.env.POCKET_IS_WORKER": true,
+        "process.env.POCKET_IS_SERVER": false,
+        "process.env.POCKET_IS_EDGE": false,
+        "process.env.POCKET_DISABLE_WORKER": options.disableWorker,
+      }),
+      new CopyPlugin({
+        patterns: [
+          {
+            from: path.resolve(process.cwd(), "public"),
+            to: "static",
+            noErrorOnMissing: true,
+          },
+        ],
+      }),
+    ],
+  };
 
   const edgeConfig: Configuration = {
     ...baseConfig,
@@ -33,7 +83,9 @@ export default async function buildForVercel() {
     plugins: [
       new DefinePlugin({
         "process.env.POCKET_IS_WORKER": false,
-        "process.env.POCKET_IS_SERVER": true,
+        "process.env.POCKET_IS_SERVER": false,
+        "process.env.POCKET_IS_EDGE": true,
+        "process.env.POCKET_DISABLE_WORKER": options.disableWorker,
       }),
     ],
   };
@@ -76,49 +128,3 @@ export default async function buildForVercel() {
 
   buildConfig();
 }
-
-const baseConfig: Configuration = {
-  mode: "production",
-  context: path.resolve(process.cwd(), ".vercel/output"),
-  module: {
-    rules: [
-      {
-        test: /\.(ts|tsx)$/i,
-        loader: "swc-loader",
-        exclude: ["/node_modules"],
-      },
-    ],
-  },
-  resolve: {
-    extensions: [".tsx", ".ts", ".jsx", ".js"],
-    modules: [process.cwd(), "node_modules"],
-  },
-};
-
-const clientConfig: Configuration = {
-  ...baseConfig,
-  entry: {
-    "_pocket-worker": "val-loader?environment=worker!pocket/dist/router.js",
-    "_pocket/runtime": "pocket/dist/client/runtime.js",
-  },
-  output: {
-    path: path.resolve(process.cwd(), ".vercel/output/static"),
-    filename: "[name].js",
-  },
-  devtool: "source-map",
-  plugins: [
-    new DefinePlugin({
-      "process.env.POCKET_IS_WORKER": true,
-      "process.env.POCKET_IS_SERVER": false,
-    }),
-    new CopyPlugin({
-      patterns: [
-        {
-          from: path.resolve(process.cwd(), "public"),
-          to: "static",
-          noErrorOnMissing: true,
-        },
-      ],
-    }),
-  ],
-};
