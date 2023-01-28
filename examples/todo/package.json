@@ -7,7 +7,7 @@
     "build": "pocket build",
     "build:vercel": "node ../../packages/core/dist/cli.js build --output vercel",
     "start": "pocket start",
-    "dev": "pocket dev",
+    "dev": "pocket dev --port 3001",
     "clean": "rm -rf .pocket .vercel"
   },
   "dependencies": {

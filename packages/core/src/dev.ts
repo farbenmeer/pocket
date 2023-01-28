@@ -6,7 +6,10 @@ import { webpack } from "webpack";
 import { getServerRuntime } from "./server.js";
 import { serverConfig, workerConfig } from "./webpack.config.js";
 
-export function startDevServer(options?: { disableWorker?: boolean }) {
+export function startDevServer(options?: {
+  disableWorker?: boolean;
+  port?: number;
+}) {
   console.log("startDevServer");
   const compiler = webpack([
     workerConfig({
@@ -53,12 +56,12 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
       console.info("Rebuilt.");
     } else {
       console.info("Starting the dev server...");
-      startServer();
+      startServer({ port: options?.port ?? 3000 });
       console.info("Server started.");
     }
   });
 
-  function startServer() {
+  function startServer(options: { port: number }) {
     sharedState.isRunning = true;
     const staticHandler = new nodeStatic.Server(
       path.resolve(process.cwd(), ".pocket/static"),
@@ -103,7 +106,7 @@ export function startDevServer(options?: { disableWorker?: boolean }) {
       await sharedState.dynamicHandler!.handler(req, res);
     });
 
-    server.listen(3000);
+    server.listen(options.port);
   }
 }
 

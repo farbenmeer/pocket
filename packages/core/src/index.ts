@@ -8,6 +8,8 @@ export type {
   PocketRoute,
   PocketLayoutContext,
   PocketLayout,
-  PocketPageContext,
-  PocketPage,
+  PocketHeadContext,
+  PocketBodyContext,
+  PocketHead,
+  PocketBody,
 } from "./route-handler-common";

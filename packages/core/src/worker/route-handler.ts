@@ -1,15 +1,16 @@
-import { getCookies, setCookies } from "./cookies";
+import { ClientPostMessage } from "../client/post-message";
 import { RequestCookies } from "../cookies";
-import { Html } from "../html";
 import { PocketRequest } from "../pocket-request";
 import { PocketResponse } from "../pocket-response";
-import { notFound } from "../response-helpers";
-import { RouteDefinition } from "../route-handler-common";
-import { ClientPostMessage } from "../client/post-message";
+import { handleRoute, RouteDefinition } from "../route-handler-common";
+import { getCookies, setCookies } from "./cookies";
 
 declare var clients: Clients;
 
-export async function setupRouteHandler(routes: RouteDefinition[]) {
+export async function setupRouteHandler(
+  routes: RouteDefinition[],
+  options: { css: boolean }
+) {
   console.log(routes);
   async function handleEvent(evt: FetchEvent) {
     const url = new URL(evt.request.url);
@@ -18,16 +19,10 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
       return fetch(evt.request);
     }
 
-    for (const { path, methods, layouts } of routes) {
-      console.log("match", path, url.pathname);
-      if (url.pathname !== path) {
+    for (const route of routes) {
+      console.log("match", route.path, url.pathname);
+      if (url.pathname !== route.path) {
         continue;
-      }
-
-      const method = methods[evt.request.method.toLowerCase()];
-
-      if (!method && !methods.page) {
-        return notFound({ headers: { Server: "Pocket Worker" } });
       }
 
       const requestCookies = await getCookies();
@@ -37,65 +32,7 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
         new RequestCookies(requestCookies)
       );
 
-      let res;
-      if (methods.page) {
-        const root = req.headers.get("X-Pocket-Root");
-
-        const activeLayouts = root
-          ? layouts.filter((layout) => !root.startsWith(layout.path))
-          : layouts;
-
-        function render(props: unknown): Html {
-          let html = Html.from(methods.page!({ req, props }));
-
-          for (const { layout, pathDigest } of activeLayouts) {
-            if (!layout) {
-              continue;
-            }
-
-            html = Html.from(
-              layout({
-                req,
-                children: new Html(
-                  [
-                    `<div style="display:none;" id="_pocket-b${pathDigest}"></div>`,
-                    `<div style="display:none;" id="_pocket-a${pathDigest}"></div>`,
-                  ],
-                  [html]
-                ),
-              })
-            );
-          }
-
-          return html;
-        }
-
-        const targetLayout = layouts.find((layout) =>
-          root?.startsWith(layout.path)
-        );
-
-        if (method) {
-          res = await method({ req, render: render as any });
-        } else {
-          res = new PocketResponse(render(undefined));
-        }
-
-        if (!(res instanceof Response)) {
-          res = new PocketResponse(res);
-        }
-
-        if (targetLayout) {
-          res.headers.set("X-Pocket-Target", targetLayout?.pathDigest);
-        }
-      } else if (method) {
-        res = await method({ req } as any);
-      } else {
-        return notFound({ headers: { Server: "Pocket Worker" } });
-      }
-
-      if (!(res instanceof Response)) {
-        res = new PocketResponse(res);
-      }
+      const res = await handleRoute(route, req, options);
 
       res.headers.set("Server", "Pocket Worker");
 

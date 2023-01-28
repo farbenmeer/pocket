@@ -21,7 +21,7 @@ export default function generateEdgeLambdaCode(options: { target: string }) {
 
   return {
     code: `
-            import { handleRoute } from "pocket/dist/vercel/route-handler";
+            import { routeHandler } from "pocket/dist/vercel/route-handler";
             import * as route from "${path.resolve(
               basePath,
               options.target.slice(1),
@@ -30,18 +30,18 @@ export default function generateEdgeLambdaCode(options: { target: string }) {
             ${layoutImports}
 
             export default function handler(req) {
-                return handleRoute({
-                    path: "${options.target}",
+                return routeHandler({
+                    path: ${JSON.stringify(options.target)},
                     methods: route,
                     layouts: [
-                    ${matchingLayouts
-                      .reverse()
-                      .map(
-                        (layout) =>
-                          `{ path: "${layout}", layout: ${layoutName(
-                            layout
-                          )}.layout, pathDigest: "${md5(layout).slice(-6)}"}`
-                      )}
+                    ${matchingLayouts.reverse().map(
+                      (layout) =>
+                        `{
+                            path: ${JSON.stringify(layout)},
+                            layout: ${layoutName(layout)},
+                            pathDigest: "${md5(layout).slice(-6)}"
+                          }`
+                    )}
                     ]
                 }, req)
             }

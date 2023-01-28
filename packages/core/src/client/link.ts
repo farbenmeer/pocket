@@ -52,31 +52,11 @@ export function registerLinks() {
 
       const renderTarget = response.headers.get("X-Pocket-Target");
       if (renderTarget) {
-        const before = document.getElementById(`_pocket-b${renderTarget}`);
-        const after = document.getElementById(`_pocket-a${renderTarget}`);
-        const parent = before?.parentNode;
-
-        if (!before || !after || !parent) {
-          throw new Error("Invalid Render Target");
-        }
-
-        const newContent = await response.text();
-
-        let remove = false;
-        for (const child of Array.from(before.parentNode.childNodes)) {
-          if (child === before) {
-            remove = true;
-            continue;
-          }
-          if (child === after) {
-            break;
-          }
-          if (remove) {
-            parent.removeChild(child);
-          }
-        }
-
-        after.insertAdjacentHTML("beforebegin", newContent);
+        await replaceBetween(
+          `_pocket-b${renderTarget}`,
+          `_pocket-a${renderTarget}`,
+          response.text()
+        );
         return;
       }
 
@@ -106,4 +86,35 @@ function getCommonAncestors(target: URL, root: string) {
     }
   }
   return [];
+}
+
+async function replaceBetween(
+  startId: string,
+  endId: string,
+  newContent: Promise<string>
+) {
+  const start = document.getElementById(startId);
+  const end = document.getElementById(endId);
+  const parent = start?.parentNode;
+
+  if (!start || !end || !parent) {
+    throw new Error("Invalid Render Target");
+  }
+
+  let remove = false;
+  for (const child of Array.from(start.parentNode.childNodes)) {
+    if (child === start) {
+      remove = true;
+      continue;
+    }
+    if (child === end) {
+      break;
+    }
+    if (remove) {
+      parent.removeChild(child);
+    }
+  }
+
+  end.insertAdjacentHTML("beforebegin", await newContent);
+  return;
 }

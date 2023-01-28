@@ -46,9 +46,11 @@ export default function generateRouter(options: {
                 .reverse()
                 .map(
                   (layout) =>
-                    `{ path: "${layout}", layout: ${layoutName(
-                      layout
-                    )}.layout, pathDigest: "${md5(layout).slice(-6)}" }`
+                    `{
+                        path: ${JSON.stringify(layout)},
+                        layout: ${layoutName(layout)},
+                        pathDigest: "${md5(layout).slice(-6)}"
+                      }`
                 )
                 .join(",")}
             ]

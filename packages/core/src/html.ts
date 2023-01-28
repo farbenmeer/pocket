@@ -96,6 +96,22 @@ export class Html {
     }
     return new Html([""], [arg]);
   }
+
+  static join(...children: Html[]) {
+    const strings: string[] = [];
+    const args: Arg[] = [];
+
+    for (const child of children) {
+      strings.push(...child.strings);
+      args.push(...child.args);
+
+      while (strings.length > args.length) {
+        args.push("");
+      }
+    }
+
+    return new Html(strings, args);
+  }
 }
 
 export const pocketScript = html`

@@ -49,8 +49,15 @@ yargs(hideBin(process.argv))
     "run dev server",
     (yargs) => {
       return yargs
-        .boolean("disable-worker")
-        .describe("disable-worker", "disable service worker");
+        .option("disable-worker", {
+          type: "boolean",
+          describe: "disable service worker",
+        })
+        .option("p", {
+          alias: "port",
+          type: "number",
+          describe: "port on which to serve the app",
+        });
     },
     (argv) => {
       startDevServer({ disableWorker: argv["disable-worker"] });
