@@ -2,7 +2,7 @@ import { html } from "pocket";
 import { table } from "./table";
 
 // handles /contact
-export function page() {
+export function body() {
   return html`
     <main>
       ${table({
