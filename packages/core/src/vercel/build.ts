@@ -110,13 +110,6 @@ export default async function buildForVercel(options: {
         entrypoint: "index.js",
       })
     );
-    fs.copyFileSync(
-      path.resolve(
-        process.cwd(),
-        ".vercel/output/static/_pocket/manifest.json"
-      ),
-      path.resolve(folder, "manifest.json")
-    );
   }
 
   buildConfig();
