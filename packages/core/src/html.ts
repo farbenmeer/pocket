@@ -11,6 +11,14 @@ html.raw = function raw(content: string) {
   return new Html([content], []);
 };
 
+html.wrap = function wrap(component: (children: Html) => Html) {
+  return {
+    html(childrenStrings: TemplateStringsArray, ...childrenArgs: Arg[]) {
+      return component(new Html(childrenStrings, childrenArgs));
+    },
+  };
+};
+
 export class Html {
   constructor(
     private strings: string[] | TemplateStringsArray,
