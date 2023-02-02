@@ -80,7 +80,7 @@ export default async function buildForVercel(options: {
       `${route.slice(1) || "index"}.func`
     );
     fs.writeFileSync(
-      path.resolve(folder, "vc-config.json"),
+      path.resolve(folder, ".vc-config.json"),
       JSON.stringify({
         runtime: "edge",
         entrypoint: "index.js",
