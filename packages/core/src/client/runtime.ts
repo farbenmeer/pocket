@@ -40,5 +40,3 @@ import { setupPostMessageHandler } from "./post-message";
   registerLinks();
   setupPostMessageHandler();
 })();
-
-export type {};

@@ -40,3 +40,7 @@ export function buildManifest() {
     layouts,
   };
 }
+
+export type RuntimeManifest = {
+  css: boolean;
+};

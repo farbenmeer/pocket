@@ -3,58 +3,65 @@ import { Html } from "./html";
 import { PocketRequest } from "./pocket-request";
 import { PocketResponse } from "./pocket-response";
 import { notFound } from "./response-helpers";
-import { MaybePromise, Thenable } from "./types";
+import { MaybePromise } from "./types";
 
-export type PocketLayoutContext = {
+export type LayoutHeadContext = {
+  req: PocketRequest;
+};
+
+export type LayoutHead = (
+  context: LayoutHeadContext
+) => MaybePromise<string | Html>;
+
+export type LayoutBodyContext = {
   req: PocketRequest;
   children: Html;
 };
 
-export type PocketLayout = (
-  context: PocketLayoutContext
+export type LayoutBody = (
+  context: LayoutBodyContext
 ) => MaybePromise<string | Html>;
 
-export type PocketHeadContext<Props> = {
-  req: PocketRequest;
-  props: Props;
-  children: Html;
-};
-
-export type PocketBodyContext<Props> = {
+export type RouteHeadContext<Props> = {
   req: PocketRequest;
   props: Props;
 };
 
-export type PocketHead<Props> = (
-  context: PocketHeadContext<Props>
+export type RouteHead<Props> = (
+  context: RouteHeadContext<Props>
 ) => MaybePromise<string | Html>;
 
-export type PocketBody<Props> = (
-  context: PocketBodyContext<Props>
+export type RouteBodyContext<Props> = {
+  req: PocketRequest;
+  props: Props;
+};
+
+export type RouteBody<Props> = (
+  context: RouteBodyContext<Props>
 ) => MaybePromise<string | Html>;
 
-export type PocketRouteContext<Props = never> = {
+export type RouteHandlerContext<Props = never> = {
   req: PocketRequest;
   render: Props extends never ? undefined : (props: Props) => Html;
 };
 
-export type PocketRoute<Props> = (
-  context: PocketRouteContext<Props>
+export type RouteHandler<Props> = (
+  context: RouteHandlerContext<Props>
 ) => MaybePromise<string | Html | Response>;
 
 export type RouteDefinition = {
   readonly path: string;
   readonly methods: {
-    readonly [method: string]: PocketRoute<unknown>;
+    readonly [method: string]: RouteHandler<unknown>;
   } & {
-    readonly head?: PocketHead<unknown>;
-    readonly body?: PocketBody<unknown>;
+    readonly head?: RouteHead<unknown>;
+    readonly body?: RouteBody<unknown>;
   };
   readonly layouts: {
     path: string;
     layout: {
-      readonly head?: PocketLayout;
-      readonly body?: PocketLayout;
+      readonly head?: LayoutHead;
+      readonly body?: LayoutBody;
     };
     pathDigest: string;
   }[];
@@ -73,35 +80,22 @@ export async function handleRoute(
 
   let res;
   if (methods.body) {
-    const root = req.headers.get("X-Pocket-Root");
-
-    const activeLayouts = root
-      ? layouts.filter((layout) => !root.startsWith(layout.path))
-      : layouts;
-
     function render(props: unknown): Html {
       let body = Html.from(methods.body!({ req, props }));
-      let head = getPocketHead(options);
+      const head = [];
 
       if (methods.head) {
-        head = Html.from(
-          methods.head({ req, props, children: getPocketHead(options) })
-        );
+        head.push(Html.from(methods.head({ req, props })));
       }
 
-      for (const layout of activeLayouts) {
+      for (const layout of layouts) {
         if (layout.layout.head) {
-          head = Html.from(
-            layout.layout.head({
-              req,
-              children: new Html(
-                [
-                  `<div style="display:none;" id="_pocket-b${layout.pathDigest}"></div>`,
-                  `<div style="display:none;" id="_pocket-a${layout.pathDigest}"></div>`,
-                ],
-                [head]
-              ),
-            })
+          head.unshift(
+            Html.from(
+              layout.layout.head({
+                req,
+              })
+            )
           );
         }
 
@@ -109,24 +103,17 @@ export async function handleRoute(
           body = Html.from(
             layout.layout.body({
               req,
-              children: new Html(
-                [
-                  `<div style="display:none;" id="_pocket-b${layout.pathDigest}"></div>`,
-                  `<div style="display:none;" id="_pocket-a${layout.pathDigest}"></div>`,
-                ],
-                [body]
-              ),
+              children: body,
             })
           );
         }
       }
 
-      return Html.join(head, body);
+      return new Html(
+        ["<!DOCTYPE html><html><head>", "", "</head><body>", "</body></html>"],
+        [head, getPocketHead(options), body]
+      );
     }
-
-    const targetLayout = layouts.find((layout) =>
-      root?.startsWith(layout.path)
-    );
 
     if (method) {
       res = await method({ req, render: render as any });
@@ -136,10 +123,6 @@ export async function handleRoute(
 
     if (!(res instanceof Response)) {
       res = new PocketResponse(res);
-    }
-
-    if (targetLayout) {
-      res.headers.set("X-Pocket-Target", targetLayout?.pathDigest);
     }
   } else if (method) {
     res = await method({ req } as any);

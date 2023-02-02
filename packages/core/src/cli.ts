@@ -60,7 +60,7 @@ yargs(hideBin(process.argv))
         });
     },
     (argv) => {
-      startDevServer({ disableWorker: argv["disable-worker"] });
+      startDevServer({ disableWorker: argv["disable-worker"], port: argv.p });
     }
   )
   .command(

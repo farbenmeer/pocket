@@ -1,14 +1,12 @@
-import { Html } from "../html";
+import { RuntimeManifest } from "../manifest";
 import { PocketRequest } from "../pocket-request";
-import { PocketResponse } from "../pocket-response";
 import { notFound } from "../response-helpers";
 import { handleRoute, RouteDefinition } from "../route-handler-common";
 import { getRequestCookies, setResponseCookies } from "./cookies";
 
-export async function setupRouteHandler(
-  routes: RouteDefinition[],
-  options: { css: boolean }
-) {
+declare var _pocket: { manifest: RuntimeManifest };
+
+export async function setupRouteHandler(routes: RouteDefinition[]) {
   addEventListener("fetch", async (evt_: Event) => {
     const evt = evt_ as FetchEvent;
     const req = new PocketRequest(evt.request, getRequestCookies(evt.request));
@@ -20,7 +18,9 @@ export async function setupRouteHandler(
         continue;
       }
 
-      const res = await handleRoute(route, req, options);
+      const res = await handleRoute(route, req, {
+        css: _pocket.manifest.css,
+      });
 
       setResponseCookies(res);
 

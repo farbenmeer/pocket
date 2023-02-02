@@ -1,9 +1,9 @@
 import { nanoid } from "nanoid";
 import {
   html,
-  PocketPageContext,
+  RouteBodyContext,
   PocketResponse,
-  PocketRouteContext,
+  RouteHandlerContext,
 } from "pocket";
 
 export type Todo = {
@@ -16,7 +16,7 @@ type Props = {
   todos: Todo[];
 };
 
-export function page({ props }: PocketPageContext<Props>) {
+export function body({ props }: RouteBodyContext<Props>) {
   return html`
     <h1>Pocket Todos</h1>
     <form method="POST">
@@ -51,14 +51,14 @@ export function page({ props }: PocketPageContext<Props>) {
 }
 
 // handles /
-export async function get({ req, render }: PocketRouteContext<Props>) {
+export async function get({ req, render }: RouteHandlerContext<Props>) {
   const rawTodos = req.cookies.get("pocket-todos")?.value;
   const todos: Todo[] = rawTodos ? JSON.parse(rawTodos) : [];
 
   return render({ todos });
 }
 
-export async function post({ req, render }: PocketRouteContext<Props>) {
+export async function post({ req, render }: RouteHandlerContext<Props>) {
   const body = await req.formData();
 
   const rawTodos = req.cookies.get("pocket-todos")?.value;

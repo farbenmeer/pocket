@@ -12,7 +12,7 @@ export const jsLoaders = {
 
 const cssLoader = {
   loader: "css-loader",
-  options: { modules: true, importLoaders: 1 },
+  options: { importLoaders: 1 },
 };
 
 function resolvePostcssConfig() {
@@ -33,14 +33,9 @@ const postcssLoader = {
   },
 };
 
-export const cssLoadersProd = {
+export const cssLoaders = {
   test: /\.css$/i,
   use: [MiniCssExtractPlugin.loader, cssLoader, postcssLoader],
-};
-
-export const cssLoadersDev = {
-  test: /\.css$/i,
-  use: ["style-loader", cssLoader, postcssLoader],
 };
 
 export const cssLoadersServer = {
@@ -79,7 +74,6 @@ export function workerConfig(options: Options): Configuration {
   return {
     entry: {
       "_pocket-worker": "val-loader?environment=worker!pocket/dist/router.js",
-      "_pocket/runtime": "pocket/dist/client/runtime.js",
     },
     output: {
       path: path.resolve(options.context, "static"),
@@ -88,24 +82,29 @@ export function workerConfig(options: Options): Configuration {
     mode: options.mode,
     context: options.context,
     module: {
-      rules: [
-        jsLoaders,
-        options.mode === "development" ? cssLoadersDev : cssLoadersProd,
-      ],
+      rules: [jsLoaders, cssLoaders],
     },
     resolve,
     devtool: options.mode === "development" ? "eval-source-map" : "source-map",
     plugins: [
       definePlugin("worker", options.disableWorker),
-      ...(options.mode === "development"
-        ? []
-        : [new MiniCssExtractPlugin({ filename: "main.css", runtime: false })]),
+      new MiniCssExtractPlugin({
+        filename: "_pocket/css/main.css",
+        runtime: false,
+      }),
       new CopyPlugin({
         patterns: [
           {
             from: path.resolve(process.cwd(), "public"),
             to: "static",
             noErrorOnMissing: true,
+          },
+          {
+            from: path.resolve(
+              require.resolve("pocket"),
+              "../client/runtime.js"
+            ),
+            to: "_pocket/runtime.js",
           },
         ],
       }),

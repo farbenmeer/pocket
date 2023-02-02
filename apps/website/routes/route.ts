@@ -1,5 +1,5 @@
 import { html } from "pocket";
 
-export function page() {
-  return html``;
+export function body() {
+  return html`Hello World`;
 }

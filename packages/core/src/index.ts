@@ -4,12 +4,14 @@ export { notFound } from "./response-helpers";
 export { PocketRequest } from "./pocket-request";
 export { PocketResponse } from "./pocket-response";
 export type {
-  PocketRouteContext,
-  PocketRoute,
-  PocketLayoutContext,
-  PocketLayout,
-  PocketHeadContext,
-  PocketBodyContext,
-  PocketHead,
-  PocketBody,
+  RouteHandlerContext,
+  RouteHandler,
+  LayoutBodyContext,
+  LayoutBody,
+  LayoutHeadContext,
+  LayoutHead,
+  RouteBodyContext,
+  RouteBody,
+  RouteHeadContext,
+  RouteHead,
 } from "./route-handler-common";

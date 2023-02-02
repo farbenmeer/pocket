@@ -1,7 +1,7 @@
 import * as fs from "fs";
 import path from "path";
 import { webpack } from "webpack";
-import { buildManifest } from "../manifest";
+import { buildManifest, RuntimeManifest } from "../manifest";
 import { edgeConfig, workerConfig } from "../webpack.config";
 import { buildConfig } from "./config";
 
@@ -49,20 +49,49 @@ export default async function buildForVercel(options: {
         console.warn(info.warnings);
       }
 
-      console.log(stats?.toJson("minimal"));
+      const chunks = stats?.toJson()?.children?.[0]?.chunks;
+
+      if (!chunks) {
+        return reject(
+          new Error("Failed to retrieve compilation stats for chunks")
+        );
+      }
+
+      const runtimeManifest: RuntimeManifest = {
+        css: chunks[0]!.files?.some((file) => file.endsWith(".css")) ?? false,
+      };
+
+      fs.writeFileSync(
+        path.resolve(
+          process.cwd(),
+          ".vercel/output/static/_pocket/manifest.json"
+        ),
+        JSON.stringify(runtimeManifest)
+      );
+
       return resolve(stats);
     });
   });
 
   for (const route of manifest.routes) {
+    const folder = path.resolve(
+      process.cwd(),
+      ".vercel/output/functions",
+      `${route.slice(1) || "index"}.func`
+    );
     fs.writeFileSync(
-      `${process.cwd()}/.vercel/output/functions/${
-        route.slice(1) || "index"
-      }.func/.vc-config.json`,
+      path.resolve(folder, "vc-config.json"),
       JSON.stringify({
         runtime: "edge",
         entrypoint: "index.js",
       })
+    );
+    fs.copyFileSync(
+      path.resolve(
+        process.cwd(),
+        ".vercel/output/static/_pocket/manifest.json"
+      ),
+      path.resolve(folder, "manifest.json")
     );
   }
 

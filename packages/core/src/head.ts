@@ -13,7 +13,7 @@ export function getPocketHead(options: { css: boolean }) {
   if (options.css) {
     return html`
       ${script}
-      <link rel="stylesheet" href="/static/main.css" />
+      <link rel="stylesheet" href="/_pocket/css/main.css" />
     `;
   }
 

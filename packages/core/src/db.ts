@@ -1,10 +1,15 @@
 import * as idb from "idb";
 import { ResponseCookie } from "./cookies";
+import { RuntimeManifest } from "./manifest";
 
 interface PocketSchema extends idb.DBSchema {
   cookies: {
     key: string;
     value: ResponseCookie;
+  };
+  data: {
+    key: "manifest";
+    value: RuntimeManifest;
   };
 }
 
@@ -17,6 +22,7 @@ export async function openDB() {
       upgrade(db) {
         console.log("upgrade");
         db.createObjectStore("cookies", { keyPath: "name" });
+        db.createObjectStore("data");
         console.log("upgrade done");
       },
     }));

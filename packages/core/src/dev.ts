@@ -5,6 +5,8 @@ import * as path from "path";
 import { webpack } from "webpack";
 import { getServerRuntime } from "./server.js";
 import { serverConfig, workerConfig } from "./webpack.config.js";
+import * as fs from "fs";
+import { RuntimeManifest } from "./manifest.js";
 
 export function startDevServer(options?: {
   disableWorker?: boolean;
@@ -29,37 +31,59 @@ export function startDevServer(options?: {
     isRunning: false,
   };
 
-  compiler.watch({}, (error, stats) => {
-    if (error) {
-      console.error(error);
-      if (!sharedState.isRunning) {
-        throw error;
+  compiler.watch(
+    {
+      ignored: /\.pocket/,
+    },
+    (error, stats) => {
+      if (error) {
+        console.error(error);
+        if (!sharedState.isRunning) {
+          throw error;
+        }
+      }
+
+      if (stats?.hasErrors()) {
+        const info = stats.toJson("minimal");
+        console.error(info.errors);
+        if (!sharedState.isRunning) {
+          throw new Error(JSON.stringify(info.errors));
+        }
+      }
+
+      if (stats?.hasWarnings()) {
+        const info = stats.toJson("minimal");
+        console.warn(info.warnings);
+      }
+
+      const chunks = stats?.toJson()?.children?.[0]?.chunks;
+
+      if (!chunks) {
+        throw new Error("Failed to retrieve compilation stats for chunks");
+      }
+
+      const runtimeManifest: RuntimeManifest = {
+        css: chunks[0]!.files?.some((file) => file.endsWith(".css")) ?? false,
+      };
+
+      fs.writeFileSync(
+        path.resolve(process.cwd(), ".pocket/static/_pocket/manifest.json"),
+        JSON.stringify(runtimeManifest)
+      );
+
+      sharedState.dynamicHandler = createHandler({
+        runtime: getServerRuntime({ runtimeManifest }),
+      });
+      if (sharedState.isRunning) {
+        sharedState.rebuildCallbacks.forEach((cb) => cb());
+        console.info("Rebuilt.");
+      } else {
+        console.info("Starting the dev server...");
+        startServer({ port: options?.port ?? 3000 });
+        console.info(`Server started and listening on port ${options?.port}.`);
       }
     }
-
-    if (stats?.hasErrors()) {
-      const info = stats.toJson("minimal");
-      console.error(info.errors);
-      if (!sharedState.isRunning) {
-        throw new Error(JSON.stringify(info.errors));
-      }
-    }
-
-    if (stats?.hasWarnings()) {
-      const info = stats.toJson("minimal");
-      console.warn(info.warnings);
-    }
-
-    sharedState.dynamicHandler = createHandler({ runtime: getServerRuntime() });
-    if (sharedState.isRunning) {
-      sharedState.rebuildCallbacks.forEach((cb) => cb());
-      console.info("Rebuilt.");
-    } else {
-      console.info("Starting the dev server...");
-      startServer({ port: options?.port ?? 3000 });
-      console.info("Server started.");
-    }
-  });
+  );
 
   function startServer(options: { port: number }) {
     sharedState.isRunning = true;
