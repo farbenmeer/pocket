@@ -19,9 +19,15 @@ export default function generateEdgeLambdaCode(options: { target: string }) {
     )}";`
   );
 
+  const runtimeManifestPath = path.resolve(
+    process.cwd(),
+    ".vercel/output/static/_pocket/manifest.json"
+  );
+
   return {
     code: `
             import { routeHandler } from "pocket/dist/vercel/route-handler";
+            import manifest from ${JSON.stringify(runtimeManifestPath)};
             import * as route from "${path.resolve(
               basePath,
               options.target.slice(1),
@@ -43,7 +49,7 @@ export default function generateEdgeLambdaCode(options: { target: string }) {
                           }`
                     )}
                     ]
-                }, req)
+                }, req, manifest)
             }
         `,
     dependencies: [

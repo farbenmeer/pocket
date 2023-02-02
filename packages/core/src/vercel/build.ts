@@ -11,66 +11,90 @@ export default async function buildForVercel(options: {
   console.log("buildForVercel");
   const manifest = buildManifest();
 
-  const webpackConfig = [
-    workerConfig({
-      context: path.resolve(process.cwd(), ".vercel/output"),
-      mode: "production",
-      disableWorker: options.disableWorker,
-    }),
-    edgeConfig({
-      disableWorker: options.disableWorker,
-      entry: Object.fromEntries(
-        manifest.routes.map((route) => [
-          (route.slice(1) || "index") + ".func/index",
-          `val-loader?target=${encodeURIComponent(
-            route
-          )}!pocket/dist/vercel/edge-lambda.js`,
-        ])
-      ),
-    }),
-  ];
+  const runtimeManifest = await new Promise((resolve, reject) => {
+    webpack(
+      workerConfig({
+        context: path.resolve(process.cwd(), ".vercel/output"),
+        mode: "production",
+        disableWorker: options.disableWorker,
+      }),
+      (error, stats) => {
+        console.log("webpack is done");
+        if (error) {
+          console.error(error);
+          return reject(error);
+        }
+
+        if (stats?.hasErrors()) {
+          const info = stats.toJson("minimal");
+          console.error(info.errors);
+          return reject(info.errors);
+        }
+
+        if (stats?.hasWarnings()) {
+          const info = stats.toJson();
+          console.warn(info.warnings);
+        }
+
+        const chunks = stats?.toJson()?.chunks;
+
+        if (!chunks) {
+          return reject(
+            new Error("Failed to retrieve compilation stats for chunks")
+          );
+        }
+
+        const runtimeManifest: RuntimeManifest = {
+          css: chunks[0]!.files?.some((file) => file.endsWith(".css")) ?? false,
+        };
+
+        fs.writeFileSync(
+          path.resolve(
+            process.cwd(),
+            ".vercel/output/static/_pocket/manifest.json"
+          ),
+          JSON.stringify(runtimeManifest)
+        );
+
+        return resolve(runtimeManifest);
+      }
+    );
+  });
 
   await new Promise((resolve, reject) => {
-    webpack(webpackConfig, (error, stats) => {
-      console.log("webpack is done");
-      if (error) {
-        console.error(error);
-        return reject(error);
-      }
-
-      if (stats?.hasErrors()) {
-        const info = stats.toJson("minimal");
-        console.error(info.errors);
-        return reject(info.errors);
-      }
-
-      if (stats?.hasWarnings()) {
-        const info = stats.toJson();
-        console.warn(info.warnings);
-      }
-
-      const chunks = stats?.toJson()?.children?.[0]?.chunks;
-
-      if (!chunks) {
-        return reject(
-          new Error("Failed to retrieve compilation stats for chunks")
-        );
-      }
-
-      const runtimeManifest: RuntimeManifest = {
-        css: chunks[0]!.files?.some((file) => file.endsWith(".css")) ?? false,
-      };
-
-      fs.writeFileSync(
-        path.resolve(
-          process.cwd(),
-          ".vercel/output/static/_pocket/manifest.json"
+    webpack(
+      edgeConfig({
+        disableWorker: options.disableWorker,
+        entry: Object.fromEntries(
+          manifest.routes.map((route) => [
+            (route.slice(1) || "index") + ".func/index",
+            `val-loader?target=${encodeURIComponent(
+              route
+            )}!pocket/dist/vercel/edge-lambda.js`,
+          ])
         ),
-        JSON.stringify(runtimeManifest)
-      );
+      }),
+      (error, stats) => {
+        console.log("webpack is done");
+        if (error) {
+          console.error(error);
+          return reject(error);
+        }
 
-      return resolve(stats);
-    });
+        if (stats?.hasErrors()) {
+          const info = stats.toJson("minimal");
+          console.error(info.errors);
+          return reject(info.errors);
+        }
+
+        if (stats?.hasWarnings()) {
+          const info = stats.toJson();
+          console.warn(info.warnings);
+        }
+
+        return resolve(null);
+      }
+    );
   });
 
   for (const route of manifest.routes) {
