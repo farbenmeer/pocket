@@ -2,11 +2,12 @@ import { RuntimeManifest } from "../manifest";
 import { PocketRequest } from "../pocket-request";
 import { handleRoute, RouteDefinition } from "../route-handler-common";
 import { getRequestCookies, setResponseCookies } from "../server/cookies";
+eval(`import manifest from "./manifest.json"`);
+declare var manifest: RuntimeManifest;
 
 export async function routeHandler(
   route: RouteDefinition,
-  originalRequest: Request,
-  manifest: RuntimeManifest
+  originalRequest: Request
 ) {
   const req = new PocketRequest(
     originalRequest,

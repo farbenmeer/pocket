@@ -28,7 +28,6 @@ export default function generateEdgeLambdaCode(options: { target: string }) {
               "route.ts"
             )}";
             ${layoutImports}
-            import manifest from "./manifest.json"
 
             export default function handler(req) {
                 return routeHandler({
@@ -44,7 +43,7 @@ export default function generateEdgeLambdaCode(options: { target: string }) {
                           }`
                     )}
                     ]
-                }, req, manifest)
+                }, req)
             }
         `,
     dependencies: [
