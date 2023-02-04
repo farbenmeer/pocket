@@ -59,7 +59,7 @@ type Options = {
 };
 
 export function definePlugin(
-  environment: "worker" | "server" | "edge",
+  environment: "worker" | "server" | "edge" | "client",
   disableWorker: boolean
 ) {
   return new DefinePlugin({
@@ -67,6 +67,7 @@ export function definePlugin(
     "process.env.POCKET_IS_WORKER": environment === "worker",
     "process.env.POCKET_IS_SERVER": environment === "server",
     "process.env.POCKET_IS_EDGE": environment === "edge",
+    "process.env.POCKET_IS_CLIENT": environment === "client",
   });
 }
 
@@ -99,16 +100,29 @@ export function workerConfig(options: Options): Configuration {
             to: "static",
             noErrorOnMissing: true,
           },
-          {
-            from: path.resolve(
-              require.resolve("pocket"),
-              "../client/runtime.js"
-            ),
-            to: "_pocket/runtime.js",
-          },
         ],
       }),
     ],
+  };
+}
+
+export function clientConfig(options: Options): Configuration {
+  return {
+    entry: {
+      "_pocket/runtime.js": "pocket/dist/client/runtime.js",
+    },
+    output: {
+      path: path.resolve(options.context, "static"),
+      filename: "[name].js",
+    },
+    mode: options.mode,
+    context: options.context,
+    module: {
+      rules: [jsLoaders],
+    },
+    resolve,
+    devtool: options.mode === "development" ? "eval-source-map" : "source-map",
+    plugins: [definePlugin("client", options.disableWorker)],
   };
 }
 
