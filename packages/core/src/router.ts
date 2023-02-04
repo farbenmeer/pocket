@@ -1,6 +1,6 @@
 import * as path from "path";
-import { buildManifest } from "./manifest";
-import { md5 } from "./md5";
+import { buildManifest } from "./manifest.js";
+import { md5 } from "./md5.js";
 
 export default function generateRouter(options: {
   environment: "server" | "worker";
@@ -26,9 +26,8 @@ export default function generateRouter(options: {
     `
   );
 
-  return {
-    code: `
-      import { setupRouteHandler } from "pocket/dist/${
+  return `
+      import { setupRouteHandler } from "pocket/src/${
         options.environment
       }/route-handler";
       ${routeImports.join("\n")}
@@ -56,15 +55,7 @@ export default function generateRouter(options: {
           }`
         )}
       ])
-    `,
-    dependencies: manifest.routes
-      .map((route) => path.resolve(basePath, route.slice(1), "route.ts"))
-      .concat(
-        manifest.layouts.map((layout) =>
-          path.resolve(basePath, layout.slice(1), "layout.ts")
-        )
-      ),
-  };
+    `;
 }
 
 function handlerName(route: string) {

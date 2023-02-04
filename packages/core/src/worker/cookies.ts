@@ -1,5 +1,5 @@
-import { ResponseCookie } from "../cookies";
-import { openDB } from "../db";
+import { ResponseCookie } from "../cookies.js";
+import { openDB } from "../db.js";
 
 export async function getCookies(): Promise<ResponseCookie[]> {
   const db = await openDB();

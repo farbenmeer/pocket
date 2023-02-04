@@ -1,4 +1,4 @@
-import { syncCookies } from "./cookies";
+import { syncCookies } from "./cookies.js";
 
 export type ClientPostMessage = {
   type: "sync-cookies";

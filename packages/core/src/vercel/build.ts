@@ -1,9 +1,9 @@
 import * as fs from "fs";
 import path from "path";
-import { webpack } from "webpack";
-import { buildManifest, RuntimeManifest } from "../manifest";
-import { edgeConfig, workerConfig } from "../webpack.config";
-import { buildConfig } from "./config";
+import webpack from "webpack";
+import { buildManifest, RuntimeManifest } from "../manifest.js";
+import { edgeConfig, workerConfig } from "../webpack.config.js";
+import { buildConfig } from "./config.js";
 
 export default async function buildForVercel(options: {
   disableWorker: boolean;
@@ -12,7 +12,7 @@ export default async function buildForVercel(options: {
   const manifest = buildManifest();
 
   const runtimeManifest = await new Promise((resolve, reject) => {
-    webpack(
+    webpack.webpack(
       workerConfig({
         context: path.resolve(process.cwd(), ".vercel/output"),
         mode: "production",
@@ -62,7 +62,7 @@ export default async function buildForVercel(options: {
   });
 
   await new Promise((resolve, reject) => {
-    webpack(
+    webpack.webpack(
       edgeConfig({
         disableWorker: options.disableWorker,
         entry: Object.fromEntries(

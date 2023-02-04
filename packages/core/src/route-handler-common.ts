@@ -1,9 +1,9 @@
-import { getPocketHead } from "./head";
-import { Html } from "./html";
-import { PocketRequest } from "./pocket-request";
-import { PocketResponse } from "./pocket-response";
-import { notFound } from "./response-helpers";
-import { MaybePromise } from "./types";
+import { getPocketHead } from "./head.js";
+import { Html } from "./html.js";
+import { PocketRequest } from "./pocket-request.js";
+import { PocketResponse } from "./pocket-response.js";
+import { notFound } from "./response-helpers.js";
+import { MaybePromise } from "./types.js";
 
 export type LayoutHeadContext = {
   req: PocketRequest;

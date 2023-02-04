@@ -1,6 +1,6 @@
 import { html, LayoutBodyContext } from "pocket";
-import "tailwindcss/tailwind.css";
-import { navigation } from "./navigation";
+import "./main.css";
+import { navigation } from "./navigation.js";
 
 export function head() {
   return html`

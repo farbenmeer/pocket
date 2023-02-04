@@ -1,23 +1,28 @@
 import escape from "escape-html";
-import { MaybeArray, MaybePromise } from "./types";
+import { MaybeArray, MaybePromise } from "./types.js";
 
 type Arg = MaybeArray<MaybePromise<string | Html | null | false | number>>;
 
 export function html(strings: TemplateStringsArray, ...args: Arg[]) {
-  return new Html(strings, args);
+  return /* #__PURE__ */ new Html(strings, args);
 }
 
 html.raw = function raw(content: string) {
-  return new Html([content], []);
+  return /* #__PURE__ */ new Html([content], []);
 };
 
 html.wrap = function wrap(component: (children: Html) => Html) {
   return {
-    html(childrenStrings: TemplateStringsArray, ...childrenArgs: Arg[]) {
-      return component(new Html(childrenStrings, childrenArgs));
+    /* #__PURE__ */ html(
+      childrenStrings: TemplateStringsArray,
+      ...childrenArgs: Arg[]
+    ) {
+      return /* #__PURE__ */ component(new Html(childrenStrings, childrenArgs));
     },
   };
 };
+
+export const wrap = html.wrap;
 
 export class Html {
   constructor(

@@ -1,61 +1,97 @@
+import * as esbuild from "esbuild";
 import * as fs from "fs";
 import * as path from "path";
-import webpack from "webpack";
-import { RuntimeManifest } from "./manifest.js";
-import { serverConfig, workerConfig } from "./webpack.config.js";
+import { define } from "./compiler.js";
+import generateRouter from "./router.js";
+import { buildManifest } from "./manifest.js";
+import { buildEntryPoint } from "./client/entry.js";
+import stylePlugin from "esbuild-style-plugin";
+import postcssrc from "postcss-load-config";
 
 export async function build(options: { disableWorker: boolean }) {
   console.log("build it");
-  await new Promise((resolve, reject) => {
-    webpack(
-      [
-        workerConfig({
-          mode: "production",
-          disableWorker: options.disableWorker,
-          context: path.resolve(process.cwd(), ".pocket"),
-        }),
-        serverConfig({
-          mode: "production",
-          disableWorker: options.disableWorker,
-        }),
-      ],
-      (error, stats) => {
-        console.log("webpack is done");
-        if (error) {
-          console.error(error);
-          return reject(error);
-        }
+  const manifest = buildManifest();
 
-        if (stats?.hasErrors()) {
-          const info = stats.toJson("minimal");
-          console.error(info.errors);
-          return reject(info.errors);
-        }
+  let postcssConfig = undefined;
+  try {
+    postcssConfig = await postcssrc({ cwd: process.cwd() });
+  } catch {}
 
-        if (stats?.hasWarnings()) {
-          const info = stats.toJson();
-          console.warn(info.warnings);
-        }
+  const result = await esbuild.build({
+    entryPoints: manifest.routes.map((route) => ({
+      in: `.pocket/tmp/client/${route.slice(1) || "index"}/entry.js`,
+      out: route.slice(1) || "index",
+    })),
+    outdir: path.resolve(process.cwd(), ".pocket/prod/static/_pocket/client"),
+    bundle: true,
+    platform: "browser",
+    target: "es6",
+    minify: true,
+    metafile: true,
+    plugins: [
+      {
+        name: "pocket",
+        setup(build) {
+          build.onStart(async () => {
+            console.log("write entrypoints");
+            await Promise.all(
+              manifest.routes.map(async (route) => {
+                const dir = path.resolve(
+                  process.cwd(),
+                  ".pocket/tmp/client",
+                  route.slice(1) || "index"
+                );
 
-        const chunks = stats?.toJson()?.children?.[0]?.chunks;
+                await fs.promises.mkdir(dir, { recursive: true });
+                await fs.promises.writeFile(
+                  path.resolve(dir, "entry.js"),
+                  buildEntryPoint(manifest, route)
+                );
+              })
+            );
+          });
 
-        if (!chunks) {
-          return reject(
-            new Error("Failed to retrieve compilation stats for chunks")
-          );
-        }
+          build.onDispose(async () => {
+            await fs.promises.rmdir(".pocket/tmp/client");
+          });
+        },
+      },
+      stylePlugin({
+        postcss: postcssConfig,
+      }),
+    ],
+    define: define("client", options.disableWorker),
+  });
 
-        const clientManifest: RuntimeManifest = {
-          css: chunks[0]!.files?.some((file) => file.endsWith(".css")) ?? false,
-        };
+  console.log(result.metafile.outputs);
+  await esbuild.build({
+    entryPoints: {
+      "_pocket-worker": ".pocket/tmp/worker/entry.js",
+    },
+    outdir: path.resolve(process.cwd(), ".pocket/prod"),
+    bundle: true,
+    platform: "browser",
+    plugins: [
+      {
+        name: "entry",
+        setup(build) {
+          build.onStart(async () => {
+            await fs.promises.mkdir(".pocket/tmp/worker", { recursive: true });
+            await fs.promises.writeFile(
+              ".pocket/tmp/worker/entry.js",
+              generateRouter({
+                environment: "worker",
+              })
+            );
+          });
 
-        fs.writeFileSync(
-          path.resolve(process.cwd(), ".pocket/static/_pocket/manifest.json"),
-          JSON.stringify(clientManifest)
-        );
-
-        return resolve(stats);
-      }
-    );
+          build.onDispose(async () => {
+            await fs.promises.rmdir(".pocket/tmp/worker");
+          });
+        },
+      },
+      stylePlugin({ extract: false }),
+    ],
+    define: define("worker", options.disableWorker),
   });
 }

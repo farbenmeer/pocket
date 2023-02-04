@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
-import { build } from "./build";
-import { clean } from "./clean";
-import { startDevServer } from "./dev";
-import { startServer } from "./server";
-import buildForVercel from "./vercel/build";
+import { build } from "./build.js";
+import { clean } from "./clean.js";
+import { startDevServer } from "./dev.js";
+import { startServer } from "./server.js";
+import buildForVercel from "./vercel/build.js";
 
 console.log("cli");
 yargs(hideBin(process.argv))

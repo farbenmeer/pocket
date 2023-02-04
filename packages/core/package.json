@@ -5,12 +5,13 @@
   "repository": "git@github.com:farbenmeer/pocket.git",
   "author": "Michel Smola <michel.smola@farbenmeer.de>",
   "license": "MIT",
+  "type": "module",
   "bin": {
     "pocket": "./dist/cli.js"
   },
   "scripts": {
-    "build": "tsc --module commonjs",
-    "dev": "tsc --module commonjs --watch",
+    "build": "tsc && chmod +x dist/cli.js",
+    "dev": "tsc --watch",
     "test": "jest",
     "clean": "rm -rf dist"
   },
@@ -22,11 +23,14 @@
     "css-loader": "^6.7.3",
     "csstype": "^3.1.1",
     "edge-runtime": "^2.0.2",
+    "esbuild": "^0.17.5",
+    "esbuild-style-plugin": "^1.6.1",
     "escape-html": "^1.0.3",
     "idb": "^7.1.1",
     "mini-css-extract-plugin": "^2.7.2",
     "node-static": "^0.7.11",
     "postcss": "^8.4.21",
+    "postcss-load-config": "^4.0.1",
     "postcss-loader": "^7.0.2",
     "style-loader": "^3.3.1",
     "swc-loader": "^0.2.3",
@@ -50,5 +54,8 @@
     "node-mocks-http": "^1.12.1",
     "prettier": "^2.7.1",
     "web-streams-polyfill": "^3.2.1"
-  }
+  },
+  "sideEffects": [
+    "./src/client/runtime.ts"
+  ]
 }

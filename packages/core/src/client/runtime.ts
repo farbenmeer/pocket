@@ -1,8 +1,7 @@
-import { registerLinks } from "./link";
-import { syncCookies } from "./cookies";
-import { setupPostMessageHandler } from "./post-message";
+import { syncCookies } from "./cookies.js";
+import { setupPostMessageHandler } from "./post-message.js";
 
-(async () => {
+export async function setupRuntime() {
   if (process.env.NODE_ENV === "development") {
     const eventSource = new EventSource("/_pocket/dev-events");
 
@@ -37,6 +36,5 @@ import { setupPostMessageHandler } from "./post-message";
     console.log("env is", environment);
   }
 
-  registerLinks();
   setupPostMessageHandler();
-})();
+}

@@ -1,6 +1,6 @@
 import * as path from "path";
-import { buildManifest } from "../manifest";
-import { md5 } from "../md5";
+import { buildManifest } from "../manifest.js";
+import { md5 } from "../md5.js";
 
 export default function generateEdgeLambdaCode(options: { target: string }) {
   const basePath = path.resolve(process.cwd(), "routes");

@@ -2,7 +2,7 @@ import CopyPlugin from "copy-webpack-plugin";
 import * as fs from "fs";
 import MiniCssExtractPlugin from "mini-css-extract-plugin";
 import * as path from "path";
-import { Configuration, DefinePlugin } from "webpack";
+import webpack from "webpack";
 
 export const jsLoaders = {
   test: /\.(js|ts)$/i,
@@ -62,7 +62,7 @@ export function definePlugin(
   environment: "worker" | "server" | "edge" | "client",
   disableWorker: boolean
 ) {
-  return new DefinePlugin({
+  return new webpack.DefinePlugin({
     "process.env.POCKET_DISABLE_WORKER": disableWorker,
     "process.env.POCKET_IS_WORKER": environment === "worker",
     "process.env.POCKET_IS_SERVER": environment === "server",
@@ -71,7 +71,7 @@ export function definePlugin(
   });
 }
 
-export function workerConfig(options: Options): Configuration {
+export function workerConfig(options: Options): webpack.Configuration {
   return {
     entry: {
       "_pocket-worker": "val-loader?environment=worker!pocket/dist/router.js",
@@ -106,7 +106,7 @@ export function workerConfig(options: Options): Configuration {
   };
 }
 
-export function clientConfig(options: Options): Configuration {
+export function clientConfig(options: Options): webpack.Configuration {
   return {
     entry: {
       "_pocket/runtime.js": "pocket/dist/client/runtime.js",
@@ -126,7 +126,9 @@ export function clientConfig(options: Options): Configuration {
   };
 }
 
-export function serverConfig(options: Omit<Options, "context">): Configuration {
+export function serverConfig(
+  options: Omit<Options, "context">
+): webpack.Configuration {
   return {
     entry: "val-loader?environment=server!pocket/dist/router.js",
     output: {
@@ -148,9 +150,9 @@ export function serverConfig(options: Omit<Options, "context">): Configuration {
 }
 
 export function edgeConfig(options: {
-  entry: Configuration["entry"];
+  entry: webpack.Configuration["entry"];
   disableWorker: boolean;
-}): Configuration {
+}): webpack.Configuration {
   return {
     entry: options.entry,
     mode: "production",

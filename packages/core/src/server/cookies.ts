@@ -1,6 +1,6 @@
 import * as EdgeRuntimeCookies from "@edge-runtime/cookies";
-import { RequestCookies, ResponseCookies, serializeCookie } from "../cookies";
-import { PocketResponse } from "../pocket-response";
+import { RequestCookies } from "../cookies.js";
+import { PocketResponse } from "../pocket-response.js";
 
 export function getRequestCookies(req: Request) {
   return new RequestCookies(

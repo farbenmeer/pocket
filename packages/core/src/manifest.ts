@@ -41,6 +41,8 @@ export function buildManifest() {
   };
 }
 
+export type CompilerManifest = ReturnType<typeof buildManifest>;
+
 export type RuntimeManifest = {
   css: boolean;
 };

@@ -1,5 +1,5 @@
-import { ResponseCookie, ResponseCookies } from "./cookies";
-import { Html } from "./html";
+import { ResponseCookie, ResponseCookies } from "./cookies.js";
+import { Html } from "./html.js";
 
 export class PocketResponse extends Response {
   public cookies: ResponseCookies;

@@ -3,7 +3,7 @@ import * as fs from "fs";
 import * as http from "http";
 import * as path from "path";
 import nodeStatic from "node-static";
-import { RuntimeManifest } from "./manifest";
+import { RuntimeManifest } from "./manifest.js";
 
 export function getServerRuntime(options: {
   runtimeManifest: RuntimeManifest;

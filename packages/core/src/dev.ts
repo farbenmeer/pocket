@@ -2,7 +2,7 @@ import { createHandler } from "edge-runtime";
 import * as http from "http";
 import nodeStatic from "node-static";
 import * as path from "path";
-import { webpack } from "webpack";
+import webpack from "webpack";
 import { getServerRuntime } from "./server.js";
 import { serverConfig, workerConfig } from "./webpack.config.js";
 import * as fs from "fs";
@@ -13,7 +13,7 @@ export function startDevServer(options?: {
   port?: number;
 }) {
   console.log("startDevServer");
-  const compiler = webpack([
+  const compiler = webpack.webpack([
     workerConfig({
       mode: "development",
       disableWorker: options?.disableWorker ?? false,

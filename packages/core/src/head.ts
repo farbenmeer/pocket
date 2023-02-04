@@ -1,4 +1,4 @@
-import { html } from "./html";
+import { html } from "./html.js";
 
 export function getPocketHead(options: { css: boolean }) {
   const script = html`

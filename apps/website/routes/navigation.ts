@@ -1,4 +1,4 @@
-import { container } from "components/container";
+import { container } from "components/container.js";
 import { html, Html } from "pocket";
 
 export function navigation(): Html {

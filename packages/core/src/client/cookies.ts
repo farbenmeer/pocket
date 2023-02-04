@@ -1,5 +1,5 @@
-import { parseCookie, ResponseCookie, serializeCookie } from "../cookies";
-import { openDB } from "../db";
+import { parseCookie, ResponseCookie, serializeCookie } from "../cookies.js";
+import { openDB } from "../db.js";
 
 export async function syncCookies() {
   console.log("syncCookies");

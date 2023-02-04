@@ -1,10 +1,10 @@
-import { ClientPostMessage } from "../client/post-message";
-import { RequestCookies } from "../cookies";
-import { openDB } from "../db";
-import { PocketRequest } from "../pocket-request";
-import { PocketResponse } from "../pocket-response";
-import { handleRoute, RouteDefinition } from "../route-handler-common";
-import { getCookies, setCookies } from "./cookies";
+import { ClientPostMessage } from "../client/post-message.js";
+import { RequestCookies } from "../cookies.js";
+import { openDB } from "../db.js";
+import { PocketRequest } from "../pocket-request.js";
+import { PocketResponse } from "../pocket-response.js";
+import { handleRoute, RouteDefinition } from "../route-handler-common.js";
+import { getCookies, setCookies } from "./cookies.js";
 
 declare var clients: Clients;
 
