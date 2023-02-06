@@ -1,29 +1,22 @@
 import { createHandler } from "edge-runtime";
+import * as esbuild from "esbuild";
 import * as http from "http";
 import nodeStatic from "node-static";
 import * as path from "path";
-import webpack from "webpack";
+import {
+  clientBuildOptions,
+  serverBuildOptions,
+  workerBuildOptions,
+} from "./compiler.js";
+import { buildManifest } from "./manifest.js";
 import { getServerRuntime } from "./server/start.js";
-import { serverConfig, workerConfig } from "./webpack.config.js";
-import * as fs from "fs";
-import { RuntimeManifest } from "./manifest.js";
 
-export function startDevServer(options?: {
-  disableWorker?: boolean;
-  port?: number;
+export async function startDevServer(options: {
+  disableWorker: boolean;
+  port: number;
 }) {
   console.log("startDevServer");
-  const compiler = webpack.webpack([
-    workerConfig({
-      mode: "development",
-      disableWorker: options?.disableWorker ?? false,
-      context: path.resolve(process.cwd(), ".pocket"),
-    }),
-    serverConfig({
-      mode: "development",
-      disableWorker: options?.disableWorker ?? false,
-    }),
-  ]);
+  const manifest = buildManifest();
 
   const sharedState: SharedState = {
     dynamicHandler: null,
@@ -31,55 +24,65 @@ export function startDevServer(options?: {
     isRunning: false,
   };
 
-  compiler.watch(
-    {
-      ignored: /\.pocket/,
-    },
-    (error, stats) => {
-      if (error) {
-        console.error(error);
-        if (!sharedState.isRunning) {
-          throw error;
-        }
-      }
+  const clientCx = await esbuild.context(
+    await clientBuildOptions({
+      disableWorker: options.disableWorker,
+      manifest,
+      outdir: path.resolve(process.cwd(), ".pocket/dev/static"),
+      mode: "development",
 
-      if (stats?.hasErrors()) {
-        const info = stats.toJson("minimal");
-        console.error(info.errors);
-        if (!sharedState.isRunning) {
-          throw new Error(JSON.stringify(info.errors));
-        }
-      }
+      async onStart() {
+        Object.assign(manifest, buildManifest());
+      },
 
-      if (stats?.hasWarnings()) {
-        const info = stats.toJson("minimal");
-        console.warn(info.warnings);
-      }
+      async onEnd() {
+        const workerCx = await esbuild.context(
+          await workerBuildOptions({
+            disableWorker: options.disableWorker,
+            manifest,
+            outdir: path.resolve(process.cwd(), ".pocket/dev/static"),
+            mode: "development",
+          })
+        );
+        const serverCx = await esbuild.context(
+          await serverBuildOptions({
+            disableWorker: options.disableWorker,
+            manifest,
+            write: false,
+            outdir: path.resolve(process.cwd(), ".pocket/dev"),
+            mode: "development",
 
-      const chunks = stats?.toJson()?.children?.[0]?.chunks;
+            async onEnd(result) {
+              const code = result.outputFiles?.[0]?.text;
+              if (!code) {
+                throw new Error("Failed to retrieve server code from esbuild");
+              }
 
-      if (!chunks) {
-        throw new Error("Failed to retrieve compilation stats for chunks");
-      }
-
-      sharedState.dynamicHandler = createHandler({
-        runtime: getServerRuntime(),
-      });
-      if (sharedState.isRunning) {
-        sharedState.rebuildCallbacks.forEach((cb) => cb());
-        console.info("Rebuilt.");
-      } else {
-        console.info("Starting the dev server...");
-        startServer({ port: options?.port ?? 3000 });
-        console.info(`Server started and listening on port ${options?.port}.`);
-      }
-    }
+              sharedState.dynamicHandler = createHandler({
+                runtime: getServerRuntime({ code }),
+              });
+              if (sharedState.isRunning) {
+                sharedState.rebuildCallbacks.forEach((cb) => cb());
+                console.info("Rebuilt.");
+              } else {
+                console.info("Starting the dev server...");
+                startServer({ port: options.port });
+              }
+            },
+          })
+        );
+        await workerCx.watch();
+        await serverCx.watch();
+      },
+    })
   );
+
+  clientCx.watch();
 
   function startServer(options: { port: number }) {
     sharedState.isRunning = true;
     const staticHandler = new nodeStatic.Server(
-      path.resolve(process.cwd(), ".pocket/static"),
+      path.resolve(process.cwd(), ".pocket/dev/static"),
       { cache: false }
     );
 
@@ -122,6 +125,7 @@ export function startDevServer(options?: {
     });
 
     server.listen(options.port);
+    console.info(`Server started and listening on port ${options.port}.`);
   }
 }
 

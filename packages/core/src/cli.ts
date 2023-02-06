@@ -59,6 +59,7 @@ yargs(hideBin(process.argv))
         .option("disable-worker", {
           type: "boolean",
           describe: "disable service worker",
+          default: false,
         })
         .option("p", {
           alias: "port",

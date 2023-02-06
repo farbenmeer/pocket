@@ -4,14 +4,15 @@ import * as http from "http";
 import nodeStatic from "node-static";
 import * as path from "path";
 
-export function getServerRuntime() {
+export function getServerRuntime(options: { code: string } | { path: string }) {
   console.log("getServerRuntime");
-  const code = fs.readFileSync(
-    path.resolve(process.cwd(), ".pocket/prod/server.js"),
-    {
-      encoding: "utf-8",
-    }
-  );
+  const code =
+    "code" in options
+      ? options.code
+      : fs.readFileSync(options.path, {
+          encoding: "utf-8",
+        });
+
   console.log("create EdgeRuntime");
   const runtime = new EdgeRuntime({
     initialCode: code,
@@ -23,7 +24,9 @@ export function getServerRuntime() {
 export function startServer(options: { port: number }) {
   console.log("startServer");
   const dynamicHandler = createHandler({
-    runtime: getServerRuntime(),
+    runtime: getServerRuntime({
+      path: path.resolve(process.cwd(), ".pocket/prod/server.js"),
+    }),
   });
   console.log("create static handler");
   const staticHandler = new nodeStatic.Server(
