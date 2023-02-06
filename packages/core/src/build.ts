@@ -26,7 +26,7 @@ export async function build(options: { disableWorker: boolean }) {
         manifest,
         disableWorker: options.disableWorker,
         mode: "production",
-        outdir: path.resolve(process.cwd(), "./pocket/prod/static"),
+        outdir: path.resolve(process.cwd(), ".pocket/prod/static"),
       })
     ),
     esbuild.build(
