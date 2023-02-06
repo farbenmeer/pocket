@@ -1,6 +1,6 @@
 import { html } from "./html.js";
 
-export function getPocketHead(options: { css: boolean }) {
+export function getPocketHead(options: { css: string | null }) {
   const script = html`
     <script
       defer
@@ -13,7 +13,7 @@ export function getPocketHead(options: { css: boolean }) {
   if (options.css) {
     return html`
       ${script}
-      <link rel="stylesheet" href="/_pocket/css/main.css" />
+      <link rel="stylesheet" href="${options.css}" />
     `;
   }
 

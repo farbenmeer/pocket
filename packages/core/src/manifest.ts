@@ -1,9 +1,15 @@
 import * as path from "path";
 import * as fs from "fs";
 
+type Route = {
+  path: string;
+  css: string | null;
+  client: string | null;
+};
+
 export function buildManifest() {
   const basePath = path.resolve(process.cwd(), "routes");
-  const routes: string[] = [];
+  const routes: Route[] = [];
   const layouts: string[] = [];
 
   function parseDirectory(dir: string) {
@@ -13,7 +19,12 @@ export function buildManifest() {
     for (const entry of entries) {
       console.log("entry", entry);
       if (entry === "route.ts") {
-        routes.push(dir === "." ? "/" : dir.slice(1));
+        routes.push({
+          path: dir === "." ? "/" : dir.slice(1),
+          css: null,
+          client: null,
+        });
+
         continue;
       }
 
@@ -41,7 +52,7 @@ export function buildManifest() {
   };
 }
 
-export type CompilerManifest = ReturnType<typeof buildManifest>;
+export type Manifest = ReturnType<typeof buildManifest>;
 
 export type RuntimeManifest = {
   css: boolean;

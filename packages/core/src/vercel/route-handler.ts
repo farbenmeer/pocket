@@ -13,7 +13,7 @@ export async function routeHandler(
     getRequestCookies(originalRequest)
   );
 
-  const res = await handleRoute(route, req, { css: manifest.css });
+  const res = await handleRoute(route, req);
 
   setResponseCookies(res);
 

@@ -4,7 +4,7 @@ import { hideBin } from "yargs/helpers";
 import { build } from "./build.js";
 import { clean } from "./clean.js";
 import { startDevServer } from "./dev.js";
-import { startServer } from "./server.js";
+import { startServer } from "./server/start.js";
 import buildForVercel from "./vercel/build.js";
 
 console.log("cli");
@@ -39,9 +39,16 @@ yargs(hideBin(process.argv))
   .command(
     "start",
     "run a production build",
-    () => {},
-    () => {
-      startServer();
+    (yargs) => {
+      return yargs.options("p", {
+        alias: "port",
+        type: "number",
+        default: 3000,
+        describe: "port on which to server the app",
+      });
+    },
+    (argv) => {
+      startServer({ port: argv.p });
     }
   )
   .command(
@@ -56,6 +63,7 @@ yargs(hideBin(process.argv))
         .option("p", {
           alias: "port",
           type: "number",
+          default: 3000,
           describe: "port on which to serve the app",
         });
     },

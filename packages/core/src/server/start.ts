@@ -1,16 +1,13 @@
 import { createHandler, EdgeRuntime } from "edge-runtime";
 import * as fs from "fs";
 import * as http from "http";
-import * as path from "path";
 import nodeStatic from "node-static";
-import { RuntimeManifest } from "./manifest.js";
+import * as path from "path";
 
-export function getServerRuntime(options: {
-  runtimeManifest: RuntimeManifest;
-}) {
+export function getServerRuntime() {
   console.log("getServerRuntime");
   const code = fs.readFileSync(
-    path.resolve(process.cwd(), ".pocket/pocket-server.js"),
+    path.resolve(process.cwd(), ".pocket/prod/server.js"),
     {
       encoding: "utf-8",
     }
@@ -18,32 +15,19 @@ export function getServerRuntime(options: {
   console.log("create EdgeRuntime");
   const runtime = new EdgeRuntime({
     initialCode: code,
-    extend(context) {
-      return Object.assign(context, {
-        _pocket: {
-          manifest: options.runtimeManifest,
-        },
-      });
-    },
   });
   console.log("EdgeRuntime done");
   return runtime;
 }
 
-export function startServer(options?: { runtimeManifest?: RuntimeManifest }) {
-  const runtimeManifest: RuntimeManifest =
-    options?.runtimeManifest ??
-    JSON.parse(
-      fs.readFileSync(
-        path.resolve(process.cwd(), ".pocket/dist/_pocket/manifest.json"),
-        { encoding: "utf-8" }
-      )
-    );
+export function startServer(options: { port: number }) {
+  console.log("startServer");
   const dynamicHandler = createHandler({
-    runtime: getServerRuntime({ runtimeManifest }),
+    runtime: getServerRuntime(),
   });
+  console.log("create static handler");
   const staticHandler = new nodeStatic.Server(
-    path.resolve(process.cwd(), ".pocket/static")
+    path.resolve(process.cwd(), ".pocket/prod/static")
   );
 
   const server = http.createServer(async (req, res) => {
@@ -64,7 +48,10 @@ export function startServer(options?: { runtimeManifest?: RuntimeManifest }) {
     await dynamicHandler.handler(req, res);
   });
 
-  server.listen(3000);
+  console.log("start now");
+  server.listen(options.port, "localhost", () => {
+    console.log("listening on", `http://localhost:${options.port}`);
+  });
 
   return server;
 }

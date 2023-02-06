@@ -1,7 +1,7 @@
 import { syncCookies } from "./cookies.js";
 import { setupPostMessageHandler } from "./post-message.js";
 
-export async function setupRuntime() {
+(async () => {
   if (process.env.NODE_ENV === "development") {
     const eventSource = new EventSource("/_pocket/dev-events");
 
@@ -37,4 +37,4 @@ export async function setupRuntime() {
   }
 
   setupPostMessageHandler();
-}
+})();

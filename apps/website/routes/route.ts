@@ -1,4 +1,4 @@
-import { container } from "components/container";
+import { container } from "components/container.js";
 import { html } from "pocket";
 
 export function body() {

@@ -67,9 +67,9 @@ export default async function buildForVercel(options: {
         disableWorker: options.disableWorker,
         entry: Object.fromEntries(
           manifest.routes.map((route) => [
-            (route.slice(1) || "index") + ".func/index",
+            (route.path.slice(1) || "index") + ".func/index",
             `val-loader?target=${encodeURIComponent(
-              route
+              route.path
             )}!pocket/dist/vercel/edge-lambda.js`,
           ])
         ),
@@ -101,7 +101,7 @@ export default async function buildForVercel(options: {
     const folder = path.resolve(
       process.cwd(),
       ".vercel/output/functions",
-      `${route.slice(1) || "index"}.func`
+      `${route.path.slice(1) || "index"}.func`
     );
     fs.writeFileSync(
       path.resolve(folder, ".vc-config.json"),

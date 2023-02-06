@@ -3,7 +3,7 @@ import * as http from "http";
 import nodeStatic from "node-static";
 import * as path from "path";
 import webpack from "webpack";
-import { getServerRuntime } from "./server.js";
+import { getServerRuntime } from "./server/start.js";
 import { serverConfig, workerConfig } from "./webpack.config.js";
 import * as fs from "fs";
 import { RuntimeManifest } from "./manifest.js";
@@ -62,17 +62,8 @@ export function startDevServer(options?: {
         throw new Error("Failed to retrieve compilation stats for chunks");
       }
 
-      const runtimeManifest: RuntimeManifest = {
-        css: chunks[0]!.files?.some((file) => file.endsWith(".css")) ?? false,
-      };
-
-      fs.writeFileSync(
-        path.resolve(process.cwd(), ".pocket/static/_pocket/manifest.json"),
-        JSON.stringify(runtimeManifest)
-      );
-
       sharedState.dynamicHandler = createHandler({
-        runtime: getServerRuntime({ runtimeManifest }),
+        runtime: getServerRuntime(),
       });
       if (sharedState.isRunning) {
         sharedState.rebuildCallbacks.forEach((cb) => cb());

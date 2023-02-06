@@ -1,6 +1,5 @@
 import { ClientPostMessage } from "../client/post-message.js";
 import { RequestCookies } from "../cookies.js";
-import { openDB } from "../db.js";
 import { PocketRequest } from "../pocket-request.js";
 import { PocketResponse } from "../pocket-response.js";
 import { handleRoute, RouteDefinition } from "../route-handler-common.js";
@@ -8,30 +7,14 @@ import { getCookies, setCookies } from "./cookies.js";
 
 declare var clients: Clients;
 
-const CACHE_NAME = "_pocket-internal";
-
 export async function setupRouteHandler(routes: RouteDefinition[]) {
   console.log(routes);
-
-  async function handleInstall() {
-    const res = await fetch("/_pocket/manifest.json");
-    const manifest = await res.json();
-    const db = await openDB();
-    db.put("data", manifest, "manifest");
-  }
 
   async function handleFetch(evt: FetchEvent) {
     const url = new URL(evt.request.url);
 
     if (url.hostname !== location.hostname) {
       return fetch(evt.request);
-    }
-
-    const db = await openDB();
-    const manifest = await db.get("data", "manifest");
-
-    if (!manifest) {
-      throw new Error("Failed to retrieve manifest");
     }
 
     for (const route of routes) {
@@ -47,7 +30,7 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
         new RequestCookies(requestCookies)
       );
 
-      const res = await handleRoute(route, req, { css: manifest.css });
+      const res = await handleRoute(route, req);
 
       res.headers.set("Server", "Pocket Worker");
 
@@ -80,10 +63,5 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
     const evt = evt_ as FetchEvent;
     console.log("fetchevent", evt.request.method, evt.request.url);
     evt.respondWith(handleFetch(evt));
-  });
-
-  addEventListener("install", (evt_: Event) => {
-    const evt = evt_ as ExtendableEvent;
-    evt.waitUntil(handleInstall());
   });
 }

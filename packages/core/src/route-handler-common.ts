@@ -57,6 +57,8 @@ export type RouteDefinition = {
     readonly head?: RouteHead<unknown>;
     readonly body?: RouteBody<unknown>;
   };
+  readonly css: string | null;
+  readonly client: string | null;
   readonly layouts: {
     path: string;
     layout: {
@@ -68,10 +70,10 @@ export type RouteDefinition = {
 };
 
 export async function handleRoute(
-  { methods, layouts }: RouteDefinition,
-  req: PocketRequest,
-  options: { css: boolean }
+  { methods, layouts, css }: RouteDefinition,
+  req: PocketRequest
 ) {
+  console.log("handleRoute");
   const method = methods[req.method.toLowerCase()];
 
   if (!method && !methods.body) {
@@ -111,7 +113,13 @@ export async function handleRoute(
 
       return new Html(
         ["<!DOCTYPE html><html><head>", "", "</head><body>", "</body></html>"],
-        [head, getPocketHead(options), body]
+        [
+          head,
+          getPocketHead({
+            css,
+          }),
+          body,
+        ]
       );
     }
 
@@ -125,8 +133,10 @@ export async function handleRoute(
       res = new PocketResponse(res);
     }
   } else if (method) {
+    console.log("api handler");
     res = await method({ req } as any);
   } else {
+    console.log("not found");
     return notFound();
   }
 

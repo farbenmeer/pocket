@@ -22,5 +22,9 @@ export class PocketResponse extends Response {
         this.cookies.set(cookie);
       }
     }
+
+    if (body instanceof Html) {
+      this.headers.set("Conent-Type", "text/html");
+    }
   }
 }
