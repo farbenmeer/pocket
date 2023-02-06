@@ -5,13 +5,12 @@ import { PocketResponse } from "../pocket-response.js";
 import { handleRoute, RouteDefinition } from "../route-handler-common.js";
 import { getCookies, setCookies } from "./cookies.js";
 
-declare var clients: Clients;
+declare var self: ServiceWorkerGlobalScope;
 
 export async function setupRouteHandler(routes: RouteDefinition[]) {
-  console.log(routes);
-
   async function handleFetch(evt: FetchEvent) {
     const url = new URL(evt.request.url);
+    console.log("handle", url);
 
     if (url.hostname !== location.hostname) {
       return fetch(evt.request);
@@ -41,8 +40,7 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
         evt.waitUntil(
           (async () => {
             await setCookies(responseCookie);
-            const client = await clients.get(evt.clientId);
-            console.log({ client });
+            const client = await self.clients.get(evt.clientId);
             const message: ClientPostMessage = {
               type: "sync-cookies",
             };
@@ -59,9 +57,33 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
     return fetch(evt.request);
   }
 
+  async function handleInstall() {
+    if (process.env.NODE_ENV === "development") {
+      const eventSource = new EventSource("/_pocket/dev-events");
+
+      eventSource.addEventListener("message", async () => {
+        console.log("received message");
+
+        await self.registration.unregister();
+
+        const activeClients = await self.clients.matchAll({ type: "window" });
+        activeClients.forEach((client) => {
+          client.navigate(client.url);
+        });
+      });
+
+      self.skipWaiting();
+    }
+  }
+
   addEventListener("fetch", (evt_: Event) => {
     const evt = evt_ as FetchEvent;
     console.log("fetchevent", evt.request.method, evt.request.url);
     evt.respondWith(handleFetch(evt));
+  });
+
+  addEventListener("install", (evt_: Event) => {
+    const evt = evt_ as ExtendableEvent;
+    evt.waitUntil(handleInstall());
   });
 }

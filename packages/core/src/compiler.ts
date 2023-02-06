@@ -199,6 +199,7 @@ export async function serverBuildOptions(options: {
           });
 
           build.onEnd(async (result) => {
+            console.log("build server", result);
             await options.onEnd?.(result);
           });
 

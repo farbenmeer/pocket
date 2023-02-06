@@ -36,7 +36,7 @@ export async function startDevServer(options: {
       },
 
       async onEnd() {
-        const workerCx = await esbuild.context(
+        await esbuild.build(
           await workerBuildOptions({
             disableWorker: options.disableWorker,
             manifest,
@@ -44,7 +44,7 @@ export async function startDevServer(options: {
             mode: "development",
           })
         );
-        const serverCx = await esbuild.context(
+        await esbuild.build(
           await serverBuildOptions({
             disableWorker: options.disableWorker,
             manifest,
@@ -71,8 +71,6 @@ export async function startDevServer(options: {
             },
           })
         );
-        await workerCx.watch();
-        await serverCx.watch();
       },
     })
   );
@@ -87,7 +85,9 @@ export async function startDevServer(options: {
     );
 
     const server = http.createServer(async (req, res) => {
+      console.log("handle", req.url);
       if (req.url === "/_pocket/dev-events") {
+        console.log("setup dev events");
         res.writeHead(200, {
           "Content-Type": "text/event-stream",
           Connection: "keep-alive",
