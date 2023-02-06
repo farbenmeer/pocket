@@ -1,6 +1,5 @@
 import * as esbuild from "esbuild";
 import path from "path";
-import postcssrc from "postcss-load-config";
 import {
   clientBuildOptions,
   serverBuildOptions,
