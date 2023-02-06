@@ -6,7 +6,7 @@ import * as fs from "fs";
 import { generateClientEntry } from "./client/entry.js";
 import stylePlugin from "esbuild-style-plugin";
 import generateRouter from "./router.js";
-import generateEdgeLambdaCode from "./vercel/edge-lambda.js";
+import generateEdgeLambdaEntry from "./vercel/entry.js";
 
 export function define(
   environment: "worker" | "server" | "edge" | "client",
@@ -224,6 +224,7 @@ export async function edgeBuildOptions(options: {
     })),
     outdir: path.resolve(process.cwd(), ".vercel/output/functions"),
     bundle: true,
+    format: "esm",
     platform: "browser",
     minify: true,
     plugins: [
@@ -243,7 +244,7 @@ export async function edgeBuildOptions(options: {
 
                 await fs.promises.writeFile(
                   path.resolve(dir, "entry.js"),
-                  generateEdgeLambdaCode({
+                  generateEdgeLambdaEntry({
                     manifest: options.manifest,
                     route,
                   })

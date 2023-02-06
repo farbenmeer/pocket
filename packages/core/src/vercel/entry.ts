@@ -2,7 +2,7 @@ import * as path from "path";
 import { buildManifest, Manifest } from "../manifest.js";
 import { md5 } from "../md5.js";
 
-export default function generateEdgeLambdaCode(options: {
+export default function generateEdgeLambdaEntry(options: {
   manifest: Manifest;
   route: Manifest["routes"][number];
 }) {
