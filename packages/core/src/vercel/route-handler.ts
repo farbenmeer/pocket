@@ -5,8 +5,7 @@ import { getRequestCookies, setResponseCookies } from "../server/cookies.js";
 
 export async function routeHandler(
   route: RouteDefinition,
-  originalRequest: Request,
-  manifest: RuntimeManifest
+  originalRequest: Request
 ) {
   const req = new PocketRequest(
     originalRequest,

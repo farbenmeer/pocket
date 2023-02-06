@@ -6,6 +6,7 @@ import * as fs from "fs";
 import { generateClientEntry } from "./client/entry.js";
 import stylePlugin from "esbuild-style-plugin";
 import generateRouter from "./router.js";
+import generateEdgeLambdaCode from "./vercel/edge-lambda.js";
 
 export function define(
   environment: "worker" | "server" | "edge" | "client",
@@ -209,5 +210,81 @@ export async function serverBuildOptions(options: {
       stylePlugin({ extract: false }),
     ],
     define: define("server", options.mode, options.disableWorker),
+  };
+}
+
+export async function edgeBuildOptions(options: {
+  manifest: Manifest;
+  disableWorker: boolean;
+}): Promise<esbuild.BuildOptions> {
+  return {
+    entryPoints: options.manifest.routes.map((route) => ({
+      in: `.pocket/tmp/edge/${route.path.slice(1) || "index"}/entry.js`,
+      out: `${route.path.slice(1) || "index"}.func/index`,
+    })),
+    outdir: path.resolve(process.cwd(), ".vercel/output/functions"),
+    bundle: true,
+    platform: "browser",
+    minify: true,
+    plugins: [
+      {
+        name: "pocket",
+        setup(build) {
+          build.onStart(async () => {
+            await Promise.all(
+              options.manifest.routes.map(async (route) => {
+                const dir = path.resolve(
+                  process.cwd(),
+                  ".pocket/tmp/edge",
+                  route.path.slice(1) || "index"
+                );
+
+                await fs.promises.mkdir(dir, { recursive: true });
+
+                await fs.promises.writeFile(
+                  path.resolve(dir, "entry.js"),
+                  generateEdgeLambdaCode({
+                    manifest: options.manifest,
+                    route,
+                  })
+                );
+              })
+            );
+          });
+
+          build.onEnd(async () => {
+            await fs.promises.writeFile(
+              path.resolve(process.cwd(), ".vercel/output/config.json"),
+              JSON.stringify({
+                version: 3,
+              })
+            );
+
+            await Promise.all(
+              options.manifest.routes.map(async (route) => {
+                fs.promises.writeFile(
+                  path.resolve(
+                    process.cwd(),
+                    ".vercel/output/functions",
+                    `${route.path.slice(1) || "index"}.func`,
+                    ".vc-config.json"
+                  ),
+                  JSON.stringify({
+                    runtime: "edge",
+                    entrypoint: "index.js",
+                  })
+                );
+              })
+            );
+          });
+
+          build.onDispose(async () => {
+            await fs.promises.rm(".pocket/tmp/edge", { recursive: true });
+          });
+        },
+      },
+      stylePlugin({ extract: false }),
+    ],
+    define: define("edge", "production", options.disableWorker),
   };
 }
