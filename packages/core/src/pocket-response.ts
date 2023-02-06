@@ -1,5 +1,5 @@
-import { ResponseCookie, ResponseCookies } from "./cookies";
-import { Html } from "./html";
+import { ResponseCookie, ResponseCookies } from "./cookies.js";
+import { Html } from "./html.js";
 
 export class PocketResponse extends Response {
   public cookies: ResponseCookies;
@@ -21,6 +21,10 @@ export class PocketResponse extends Response {
       for (const cookie of init.cookies) {
         this.cookies.set(cookie);
       }
+    }
+
+    if (body instanceof Html) {
+      this.headers.set("Conent-Type", "text/html");
     }
   }
 }

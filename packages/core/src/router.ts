@@ -1,22 +1,22 @@
 import * as path from "path";
-import { buildManifest } from "./manifest";
-import { md5 } from "./md5";
+import { buildManifest, Manifest } from "./manifest.js";
+import { md5 } from "./md5.js";
 
 export default function generateRouter(options: {
   environment: "server" | "worker";
+  manifest: Manifest;
 }) {
-  const manifest = buildManifest();
   const basePath = path.resolve(process.cwd(), "routes");
 
-  const routeImports = manifest.routes.map(
+  const routeImports = options.manifest.routes.map(
     (route) => `
-    import * as ${handlerName(route)} from "${path.resolve(
+    import * as ${handlerName(route.path)} from "${path.resolve(
       basePath,
-      route.slice(1),
+      route.path.slice(1),
       "route.ts"
     )}";`
   );
-  const layoutImports = manifest.layouts.map(
+  const layoutImports = options.manifest.layouts.map(
     (layout) => `
     import * as ${layoutName(layout)} from "${path.resolve(
       basePath,
@@ -26,8 +26,7 @@ export default function generateRouter(options: {
     `
   );
 
-  return {
-    code: `
+  return `
       import { setupRouteHandler } from "pocket/dist/${
         options.environment
       }/route-handler";
@@ -35,13 +34,15 @@ export default function generateRouter(options: {
       ${layoutImports.join("\n")}
 
       setupRouteHandler([
-        ${manifest.routes.map(
+        ${options.manifest.routes.map(
           (route) => `{
-            path: ${JSON.stringify(route)},
-            methods: ${handlerName(route)},
+            path: ${JSON.stringify(route.path)},
+            methods: ${handlerName(route.path)},
+            css: ${JSON.stringify(route.css)},
+            client: ${JSON.stringify(route.client)},
             layouts: [
-              ${manifest.layouts
-                .filter((layout) => route.startsWith(layout))
+              ${options.manifest.layouts
+                .filter((layout) => route.path.startsWith(layout))
                 .reverse()
                 .map(
                   (layout) =>
@@ -56,19 +57,11 @@ export default function generateRouter(options: {
           }`
         )}
       ])
-    `,
-    dependencies: manifest.routes
-      .map((route) => path.resolve(basePath, route.slice(1), "route.ts"))
-      .concat(
-        manifest.layouts.map((layout) =>
-          path.resolve(basePath, layout.slice(1), "layout.ts")
-        )
-      ),
-  };
+    `;
 }
 
-function handlerName(route: string) {
-  return route.replaceAll("/", "_") + "Handler";
+function handlerName(path: string) {
+  return path.replaceAll("/", "_") + "Handler";
 }
 function layoutName(layout: string) {
   return layout.replaceAll("/", "_") + "Layout";

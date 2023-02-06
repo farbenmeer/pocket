@@ -1,61 +1,41 @@
-import * as fs from "fs";
-import * as path from "path";
-import webpack from "webpack";
-import { RuntimeManifest } from "./manifest.js";
-import { serverConfig, workerConfig } from "./webpack.config.js";
+import * as esbuild from "esbuild";
+import path from "path";
+import postcssrc from "postcss-load-config";
+import {
+  clientBuildOptions,
+  serverBuildOptions,
+  workerBuildOptions,
+} from "./compiler.js";
+import { buildManifest } from "./manifest.js";
 
 export async function build(options: { disableWorker: boolean }) {
-  console.log("build it");
-  await new Promise((resolve, reject) => {
-    webpack(
-      [
-        workerConfig({
-          mode: "production",
-          disableWorker: options.disableWorker,
-          context: path.resolve(process.cwd(), ".pocket"),
-        }),
-        serverConfig({
-          mode: "production",
-          disableWorker: options.disableWorker,
-        }),
-      ],
-      (error, stats) => {
-        console.log("webpack is done");
-        if (error) {
-          console.error(error);
-          return reject(error);
-        }
+  const manifest = buildManifest();
 
-        if (stats?.hasErrors()) {
-          const info = stats.toJson("minimal");
-          console.error(info.errors);
-          return reject(info.errors);
-        }
+  await esbuild.build(
+    await clientBuildOptions({
+      manifest,
+      disableWorker: options.disableWorker,
+      outdir: path.resolve(process.cwd(), ".pocket/prod/static"),
+      mode: "production",
+    })
+  );
 
-        if (stats?.hasWarnings()) {
-          const info = stats.toJson();
-          console.warn(info.warnings);
-        }
-
-        const chunks = stats?.toJson()?.children?.[0]?.chunks;
-
-        if (!chunks) {
-          return reject(
-            new Error("Failed to retrieve compilation stats for chunks")
-          );
-        }
-
-        const clientManifest: RuntimeManifest = {
-          css: chunks[0]!.files?.some((file) => file.endsWith(".css")) ?? false,
-        };
-
-        fs.writeFileSync(
-          path.resolve(process.cwd(), ".pocket/static/_pocket/manifest.json"),
-          JSON.stringify(clientManifest)
-        );
-
-        return resolve(stats);
-      }
-    );
-  });
+  await Promise.all([
+    esbuild.build(
+      await workerBuildOptions({
+        manifest,
+        disableWorker: options.disableWorker,
+        mode: "production",
+        outdir: path.resolve(process.cwd(), "./pocket/prod/static"),
+      })
+    ),
+    esbuild.build(
+      await serverBuildOptions({
+        manifest,
+        disableWorker: options.disableWorker,
+        outdir: path.resolve(process.cwd(), ".pocket/prod"),
+        mode: "production",
+      })
+    ),
+  ]);
 }

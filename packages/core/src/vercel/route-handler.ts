@@ -1,19 +1,18 @@
-import { RuntimeManifest } from "../manifest";
-import { PocketRequest } from "../pocket-request";
-import { handleRoute, RouteDefinition } from "../route-handler-common";
-import { getRequestCookies, setResponseCookies } from "../server/cookies";
+import { RuntimeManifest } from "../manifest.js";
+import { PocketRequest } from "../pocket-request.js";
+import { handleRoute, RouteDefinition } from "../route-handler-common.js";
+import { getRequestCookies, setResponseCookies } from "../server/cookies.js";
 
 export async function routeHandler(
   route: RouteDefinition,
-  originalRequest: Request,
-  manifest: RuntimeManifest
+  originalRequest: Request
 ) {
   const req = new PocketRequest(
     originalRequest,
     getRequestCookies(originalRequest)
   );
 
-  const res = await handleRoute(route, req, { css: manifest.css });
+  const res = await handleRoute(route, req);
 
   setResponseCookies(res);
 

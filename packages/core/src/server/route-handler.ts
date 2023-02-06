@@ -1,8 +1,8 @@
-import { RuntimeManifest } from "../manifest";
-import { PocketRequest } from "../pocket-request";
-import { notFound } from "../response-helpers";
-import { handleRoute, RouteDefinition } from "../route-handler-common";
-import { getRequestCookies, setResponseCookies } from "./cookies";
+import { RuntimeManifest } from "../manifest.js";
+import { PocketRequest } from "../pocket-request.js";
+import { notFound } from "../response-helpers.js";
+import { handleRoute, RouteDefinition } from "../route-handler-common.js";
+import { getRequestCookies, setResponseCookies } from "./cookies.js";
 
 declare var _pocket: { manifest: RuntimeManifest };
 
@@ -18,14 +18,12 @@ export async function setupRouteHandler(routes: RouteDefinition[]) {
         continue;
       }
 
-      const res = await handleRoute(route, req, {
-        css: _pocket.manifest.css,
-      });
+      const res = await handleRoute(route, req);
 
       setResponseCookies(res);
 
       res.headers.set("Server", "Pocket Server");
-      console.log("retrrn", res.headers);
+      console.log("return", res.headers);
       evt.respondWith(res);
       return;
     }

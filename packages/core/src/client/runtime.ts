@@ -1,6 +1,5 @@
-import { registerLinks } from "./link";
-import { syncCookies } from "./cookies";
-import { setupPostMessageHandler } from "./post-message";
+import { syncCookies } from "./cookies.js";
+import { setupPostMessageHandler } from "./post-message.js";
 
 (async () => {
   if (process.env.NODE_ENV === "development") {
@@ -37,6 +36,5 @@ import { setupPostMessageHandler } from "./post-message";
     console.log("env is", environment);
   }
 
-  registerLinks();
   setupPostMessageHandler();
 })();

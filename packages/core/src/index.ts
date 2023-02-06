@@ -1,8 +1,8 @@
-/// <reference types="../types" />
-export { html, Html, pocketScript } from "./html";
-export { notFound } from "./response-helpers";
-export { PocketRequest } from "./pocket-request";
-export { PocketResponse } from "./pocket-response";
+/// <reference types="../types.js" />
+export { html, Html, pocketScript } from "./html.js";
+export { notFound } from "./response-helpers.js";
+export { PocketRequest } from "./pocket-request.js";
+export { PocketResponse } from "./pocket-response.js";
 export type {
   RouteHandlerContext,
   RouteHandler,
@@ -14,4 +14,4 @@ export type {
   RouteBody,
   RouteHeadContext,
   RouteHead,
-} from "./route-handler-common";
+} from "./route-handler-common.js";

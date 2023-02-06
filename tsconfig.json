@@ -4,7 +4,7 @@
     "target": "es2019",
     "lib": ["esnext", "dom", "webworker"],
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": true,
     "declaration": true,
     "declarationMap": true,

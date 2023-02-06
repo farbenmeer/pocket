@@ -1,40 +1,51 @@
 import escape from "escape-html";
-import { MaybeArray, MaybePromise } from "./types";
+import { MaybeArray, MaybePromise } from "./types.js";
 
 type Arg = MaybeArray<MaybePromise<string | Html | null | false | number>>;
 
 export function html(strings: TemplateStringsArray, ...args: Arg[]) {
-  return new Html(strings, args);
+  return /* #__PURE__ */ new Html(strings, args);
 }
 
 html.raw = function raw(content: string) {
-  return new Html([content], []);
+  return /* #__PURE__ */ new Html([content], []);
 };
 
 html.wrap = function wrap(component: (children: Html) => Html) {
   return {
-    html(childrenStrings: TemplateStringsArray, ...childrenArgs: Arg[]) {
-      return component(new Html(childrenStrings, childrenArgs));
+    /* #__PURE__ */ html(
+      childrenStrings: TemplateStringsArray,
+      ...childrenArgs: Arg[]
+    ) {
+      return /* #__PURE__ */ component(new Html(childrenStrings, childrenArgs));
     },
   };
 };
+
+export const wrap = html.wrap;
 
 export class Html {
   constructor(
     private strings: string[] | TemplateStringsArray,
     private args: Arg[]
-  ) {}
+  ) {
+    if (strings.length === args.length) {
+      this.strings = [...strings, ""];
+    } else if (strings.length !== args.length + 1) {
+      throw new Error("strings.length must be args.length + 1");
+    }
+  }
 
   renderToStream(): ReadableStream<Uint8Array> {
-    const strings = this.strings;
-    const args = this.args;
+    const strings = [...this.strings];
+    const args = [...this.args];
     const textEncoder = new TextEncoder();
 
     return new ReadableStream({
       async start(controller) {
-        for (let index in strings) {
-          const string = strings[index];
-          const arg = args[index];
+        while (strings.length > 0) {
+          const string = strings.shift()!;
+          const arg = args.shift();
 
           if (string) {
             controller.enqueue(textEncoder.encode(string));
@@ -59,20 +70,19 @@ export class Html {
               continue;
             }
 
-            if (value instanceof Html) {
-              const childReader = value.renderToStream().getReader();
-              while (true) {
-                const { done, value } = await childReader.read();
-
-                if (done) {
-                  break;
-                }
-
-                controller.enqueue(value);
-              }
+            if ("then" in value) {
+              strings.unshift("");
+              args.unshift(await value);
               continue;
             }
 
+            if (value instanceof Html) {
+              strings.unshift(...value.strings);
+              args.unshift(...value.args, "");
+              continue;
+            }
+
+            console.error("wrong arg", arg, Html);
             throw new TypeError("Argument is not of any allowed type");
           }
         }
@@ -88,7 +98,9 @@ export class Html {
 
     const out: string[] = [];
     while (true) {
+      console.log("read next value");
       const { done, value } = await reader.read();
+      console.log("read value");
 
       if (done) {
         return out.join("");

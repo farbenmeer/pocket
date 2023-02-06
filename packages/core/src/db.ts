@@ -1,6 +1,6 @@
 import * as idb from "idb";
-import { ResponseCookie } from "./cookies";
-import { RuntimeManifest } from "./manifest";
+import { ResponseCookie } from "./cookies.js";
+import { RuntimeManifest } from "./manifest.js";
 
 interface PocketSchema extends idb.DBSchema {
   cookies: {
