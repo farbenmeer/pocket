@@ -17,3 +17,11 @@
 .content a {
   @apply underline;
 }
+
+.content p {
+  @apply my-2;
+}
+
+.content li {
+  @apply list-disc ml-6;
+}

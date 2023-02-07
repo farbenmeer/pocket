@@ -54,10 +54,8 @@ export class Html {
           }
 
           if (Array.isArray(arg)) {
-            for (const item of arg) {
-              args.unshift(item);
-              strings.unshift("");
-            }
+            args.unshift(...arg);
+            strings.unshift(...arg.map(() => ""));
             continue;
           }
 

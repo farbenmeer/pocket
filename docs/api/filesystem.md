@@ -23,4 +23,5 @@ In addition to routes, layouts (called `layout.ts`) can be provided in any of th
 Layouts apply to the route in the same folder and any subfolders.
 
 [Learn more about routes](./routes.md)
+
 [Learn more about layouts](./layouts.md)

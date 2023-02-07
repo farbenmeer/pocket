@@ -16,7 +16,7 @@ export function docsPage(props: {
           </ul>
         </nav>
       </div>
-      <main class="md:col-span-3 lg:col-span-4">
+      <main class="md:col-span-3 lg:col-span-4 overflow-hidden">
         ${props.items.map(
           (item) => html`
             <article class="${markdown.content}" id="${item.id}">
