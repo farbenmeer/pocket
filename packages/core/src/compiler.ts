@@ -112,8 +112,9 @@ export async function clientBuildOptions(options: {
                 continue;
               }
 
-              console.log(output.cssBundle);
-              route.css = output.cssBundle?.slice(19) ?? null;
+              route.css =
+                output.cssBundle?.match(/(_pocket\/client\/.*\.css)/)?.[1] ??
+                null;
             }
             await options.onEnd?.();
           });
