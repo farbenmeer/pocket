@@ -7,6 +7,7 @@ import { generateClientEntry } from "./client/entry.js";
 import stylePlugin from "esbuild-style-plugin";
 import generateRouter from "./router.js";
 import generateEdgeLambdaEntry from "./vercel/entry.js";
+import { marked } from "marked";
 
 export function define(
   environment: "worker" | "server" | "edge" | "client",
@@ -50,6 +51,9 @@ export async function clientBuildOptions(options: {
     target: "es6",
     minify: options.mode === "production",
     metafile: true,
+    loader: {
+      ".md": "empty",
+    },
     plugins: [
       {
         name: "pocket",
@@ -158,6 +162,7 @@ export async function workerBuildOptions(options: {
           });
         },
       },
+      markdownPlugin,
       stylePlugin({ extract: false }),
     ],
     define: define("worker", options.mode, options.disableWorker),
@@ -208,6 +213,7 @@ export async function serverBuildOptions(options: {
           });
         },
       },
+      markdownPlugin,
       stylePlugin({ extract: false }),
     ],
     define: define("server", options.mode, options.disableWorker),
@@ -285,8 +291,31 @@ export async function edgeBuildOptions(options: {
           });
         },
       },
+      markdownPlugin,
       stylePlugin({ extract: false }),
     ],
     define: define("edge", "production", options.disableWorker),
   };
 }
+
+export const markdownPlugin: esbuild.Plugin = {
+  name: "pocket-markdown",
+  setup(build) {
+    build.onLoad({ filter: /\.md$/ }, async (args) => {
+      const markdown = await fs.promises.readFile(args.path, {
+        encoding: "utf-8",
+      });
+
+      const html = marked.parse(markdown);
+
+      return {
+        contents: `
+          import { Html } from "pocket";
+
+          export default new Html([${JSON.stringify(html)}], [])
+        `,
+        loader: "js",
+      };
+    });
+  },
+};

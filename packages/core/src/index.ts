@@ -1,4 +1,3 @@
-/// <reference types="../types.js" />
 export { html, Html, pocketScript } from "./html.js";
 export { notFound } from "./response-helpers.js";
 export { PocketRequest } from "./pocket-request.js";

@@ -16,5 +16,7 @@
     "pocket": "*",
     "tailwindcss": "^3.2.4"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "typescript-plugin-css-modules": "^4.1.1"
+  }
 }

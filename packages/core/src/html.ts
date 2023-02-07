@@ -1,7 +1,9 @@
 import escape from "escape-html";
 import { MaybeArray, MaybePromise } from "./types.js";
 
-type Arg = MaybeArray<MaybePromise<string | Html | null | false | number>>;
+type Arg = MaybeArray<
+  MaybePromise<string | Html | null | false | undefined | number>
+>;
 
 export function html(strings: TemplateStringsArray, ...args: Arg[]) {
   return /* #__PURE__ */ new Html(strings, args);
@@ -51,40 +53,38 @@ export class Html {
             controller.enqueue(textEncoder.encode(string));
           }
 
-          const argArr = Array.isArray(arg) ? arg : [arg];
-
-          for (const arg of argArr) {
-            const value = await arg;
-
-            if (!value) {
-              continue;
-            }
-
-            if (typeof value === "string") {
-              controller.enqueue(textEncoder.encode(escape(value)));
-              continue;
-            }
-
-            if (typeof value === "number") {
-              controller.enqueue(textEncoder.encode(value.toString()));
-              continue;
-            }
-
-            if ("then" in value) {
+          if (Array.isArray(arg)) {
+            for (const item of arg) {
+              args.unshift(item);
               strings.unshift("");
-              args.unshift(await value);
-              continue;
             }
-
-            if (value instanceof Html) {
-              strings.unshift(...value.strings);
-              args.unshift(...value.args, "");
-              continue;
-            }
-
-            console.error("wrong arg", arg, Html);
-            throw new TypeError("Argument is not of any allowed type");
+            continue;
           }
+
+          const value = await arg;
+
+          if (typeof value === "string") {
+            controller.enqueue(textEncoder.encode(escape(value)));
+            continue;
+          }
+
+          if (typeof value === "number") {
+            controller.enqueue(textEncoder.encode(value.toString()));
+            continue;
+          }
+
+          if (!value) {
+            continue;
+          }
+
+          if (value instanceof Html) {
+            strings.unshift(...value.strings);
+            args.unshift(...value.args, null);
+            continue;
+          }
+
+          console.error("wrong arg", arg, Html);
+          throw new TypeError("Argument is not of any allowed type");
         }
         controller.close();
       },
