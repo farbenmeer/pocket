@@ -29,6 +29,20 @@ more `Html`, an array of all those values or, notably, a `Promise<string>`, `Pro
 
 [Learn more](../api/html.md)
 
+## Streaming
+Streaming rendering is the default with pocket. All pages are rendered as a stream so the browser can begin rendering while content is still streaming. Whenever pocket encounters a promise as an interpolated value, it will await that promise before it continues rendering.
+This means that
+```ts
+html`
+  <div>
+    ${(async () => {
+      const result = await longRunningOperation()
+      return result
+    })()}
+  </div>
+```
+will return the response headers and `<div>` to the client, then wait for `longRunningOperation` and then return the rest of the response.
+
 ## Routing
 Pocket uses folder-based routing similar to next.js (because I really like that about next.js).
 The router starts at the root of the `routes/` folder. Put a file called `route.ts` in there. That's the one that will handle requests to `/`. Subfolders are used for different paths, e.G. `/contact/route.ts` will handle requests to `/contact` etc.
