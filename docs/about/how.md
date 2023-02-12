@@ -33,13 +33,16 @@ more `Html`, an array of all those values or, notably, a `Promise<string>`, `Pro
 Streaming rendering is the default with pocket. All pages are rendered as a stream so the browser can begin rendering while content is still streaming. Whenever pocket encounters a promise as an interpolated value, it will await that promise before it continues rendering.
 This means that
 ```ts
-html`
-  <div>
-    ${(async () => {
-      const result = await longRunningOperation()
-      return result
-    })()}
-  </div>
+function body() {
+  return html`
+    <div>
+      ${(async () => {
+        const result = await longRunningOperation()
+        return result
+      })()}
+    </div>
+  `
+}
 ```
 will return the response headers and `<div>` to the client, then wait for `longRunningOperation` and then return the rest of the response.
 
